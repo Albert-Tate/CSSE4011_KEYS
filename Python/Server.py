@@ -5,7 +5,9 @@ from Finder import get_location
 HOST = ''
 PORT = 4011
 
-
+MAC_EX = '"B4:75:0E:23:7C:46","14:CC:20:89:8E:A2'
+CHAN_EX = "2,5"
+RSSI_EX = "-87,-60"
 
 def location_request(data):
 	data.rstrip()
@@ -59,15 +61,26 @@ while 1:
 			if (data):
 				
 				if ("location" in data):
-					rx = location_request(data)
-					conn.send(str(rx))
+					okay = 1
+					try:
+						rx = location_request(data)
+					except Exception() as msg:
+						conn.send("Bad Format " + msg)
+						okay = 0
+					if okay:
+						conn.send(str(rx))
 				else:
-					conn.send("Received comms\n")
+					rx = "location "
+					rx += MAC_EX + " "
+					rx += CHAN_EX + " "
+					rx += RSSI_EX + " "
+					conn.send("Unkown format\nLOCATION REQUESTS OF FORM:\n")
+					conn.send(rx)
 					print data
 
 				break
-		except error as msg:
-			print "Unknown Error, Closing connection"
-	s.close()		
+		except Exception() as msg:
+			print "Unknown Error, Closing connection " + e
+	conn.close()		
 
 s.close()
