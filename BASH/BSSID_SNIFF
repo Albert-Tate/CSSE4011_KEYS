@@ -1,0 +1,5 @@
+#!/bin/bash
+
+sudo iwlist wlan0 scan | grep -i Address | tr -s ' ' | cut -d ' ' -f 6 > MAC
+
+sudo iwlist wlan0 scan | grep -i Frequency | tr -s ' ' | cut -d ' ' -f 5 | cut -d ')' -f 1 | tr '\n' ' ' | tr ' ' ',' | rev | cut -c 2- | rev > CHAN 
