@@ -10,7 +10,7 @@ MAC_EX = '"B4:75:0E:23:7C:46","14:CC:20:89:8E:A2'
 CHAN_EX = "2,5"
 RSSI_EX = "-87,-60"
 LAST_KEY_CHECK_IN = [0, 0, 0, 0] #lat, lon, confidence, timestamp
-
+f = open("KeyLOC", 'a')
 
 def location_request(data):
 	data.rstrip()
@@ -19,9 +19,10 @@ def location_request(data):
 	MAC = split[1].split(",")				
 	MAC_ADDR = []
 	for i in range(0, len(MAC)):
-		MAC_ADDR.append("")
-		MAC_ADDR[i] = MAC[i]
+		MAC_ADDR.append(str(MAC[i].strip('"')))
+		#MAC_ADDR[i] = MAC[i]
 
+	print MAC_ADDR
 	CHANNEL = split[2].split(",")
 	CHANNEL_LIST = []
 	for i in range(0, len(CHANNEL)):
@@ -68,6 +69,7 @@ while 1:
 					try:
 						rx = location_request(data)
 						LAST_KEY_CHECK_IN = [rx[0], rx[1], rx[2], time.time()]
+						f.write(str(LAST_KEY_CHECK_IN) + "\n")
 						print LAST_KEY_CHECK_IN
 					except Exception() as msg:
 						conn.send("Bad Format " + msg)
@@ -112,3 +114,4 @@ while 1:
 	conn.close()		
 	print "Closed Connection"
 s.close()
+f.close()
