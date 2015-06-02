@@ -27,6 +27,16 @@
         android:layout_height="wrap_content"
         android:text="Scan nodes"
         android:onClick="scanNodesBtn"/>
+
+
+    <Button xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/createAP"
+        android:layout_below="@+id/button_connect"
+        android:layout_toRightOf="@id/button_scan"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="open wifi"
+        android:onClick="openWifi"/>
     <TextView
         android:id="@+id/text2"
         android:layout_width="wrap_content"

@@ -109,6 +109,7 @@ public class TCPClient {
                 if (readbytes > 0)
                 {
                     curLoc = new LocationParser(new String(inBuff.array()), getTime).getloc();
+                    curLoc.setProvider(sendString);
                 }
                 return curLoc;
             } catch (IOException e) {
