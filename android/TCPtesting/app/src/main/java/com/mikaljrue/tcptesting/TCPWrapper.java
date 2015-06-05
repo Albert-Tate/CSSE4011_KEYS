@@ -1,12 +1,20 @@
 package com.mikaljrue.tcptesting;
 
+import android.app.Activity;
 import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
+import android.net.DhcpInfo;
 import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.text.format.Formatter;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -17,12 +25,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 
-public class TCPWrapper extends ActionBarActivity {
-
+public class TCPWrapper extends Activity  {
     private TextView text;
     Handler updateConversationHandler;
-    TCPClient client = null;
+    TCPClient longDistClient = null;
     WifiManager wifiManager;
+
+    private SensorManager mSensorManager;
+    ShortDistance shortThread;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -31,7 +42,20 @@ public class TCPWrapper extends ActionBarActivity {
         text = (TextView) findViewById(R.id.text2);
         updateConversationHandler = new Handler();
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+
         scanNodes();
+
+
+        mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+         shortThread = new ShortDistance(wifiManager, mSensorManager,
+                 new ShortDistance.DebugCallback() {
+                     @Override
+                     public void printString(String str) {
+
+                         updateConversationHandler.post(new updateUIThread(str));
+                     }
+                 });
+
     }
 
     @Override
@@ -56,11 +80,25 @@ public class TCPWrapper extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
+
+
+    protected void onPause() {
+        super.onPause();
+        shortThread.onPause();
+    }
+
+    protected void onResume() {
+        super.onPause();
+        shortThread.onResume();
+    }
+
+
+
     public void requestKeyPos(View view)
     {
-        if (client == null)
-            client = new TCPClient();
-        Location loc = client.getKeyLocationEstimate();
+        if (longDistClient == null)
+            longDistClient = new TCPClient();
+        Location loc = longDistClient.getKeyLocationEstimate();
         String report = "\nRead:" + loc.getProvider() + "\n\tlat: " + loc.getLatitude()
                 + "\n\tlon: " + loc.getLongitude() + "\n\tAcc: " + loc.getAccuracy() + "m\n\ttime: " + loc.getTime();
         if (loc != null)
@@ -71,9 +109,9 @@ public class TCPWrapper extends ActionBarActivity {
 
     public void requestMyPos(View view)
     {
-        if (client == null)
-            client = new TCPClient();
-        Location loc = client.getMyLocationEstimate(wifiManager.getScanResults());
+        if (longDistClient == null)
+            longDistClient = new TCPClient();
+        Location loc = longDistClient.getMyLocationEstimate(wifiManager.getScanResults());
         if (loc != null) {
             String report = "\nRead:" + loc.getProvider() + "\n\tlat: " + loc.getLatitude()
                     + "\n\tlon: " + loc.getLongitude() + "\n\tAcc: " + loc.getAccuracy() + "m;";
@@ -106,8 +144,13 @@ public class TCPWrapper extends ActionBarActivity {
     }
 
 
-    public void openWifi(View v) {
-        createWifiAccessPoint();
+    public void openWifiAP(View v) {
+        //connectToAP();
+    }
+
+
+    public void turnOnWifi(View v) {
+        connectToWifi();
     }
 
     private void createWifiAccessPoint() {
@@ -142,10 +185,10 @@ public class TCPWrapper extends ActionBarActivity {
                         }
                     }
                     if (apstatus) {
-                        Log.d("Splash Activity",
+                        Log.d("Wifi Switching",
                                 "Access Point created");
                     } else {
-                        Log.d("Splash Activity",
+                        Log.d("Wifi Switching",
                                 "Access Point creation failed");
                     }
 
@@ -163,4 +206,26 @@ public class TCPWrapper extends ActionBarActivity {
                     "cannot configure an access point");
         }
     }
+
+
+
+    private void connectToWifi() {
+        if (!wifiManager.isWifiEnabled()) {
+            wifiManager.setWifiEnabled(true);
+        }
+        WifiInfo info = wifiManager.getConnectionInfo();
+        while (!wifiManager.isWifiEnabled() && (
+                ((info = wifiManager.getConnectionInfo()) == null) ||
+                info.getSSID() == null)
+        )
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        if (info != null)
+            Log.v("Wifi_switching", "Finished turning on wifi, wifi SSID: " + info.getSSID());
+    }
+
+
 }

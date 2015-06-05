@@ -2,6 +2,7 @@ package com.mikaljrue.tcptesting;
 
 import android.location.Location;
 import android.net.wifi.ScanResult;
+import android.util.Log;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -24,6 +25,10 @@ public class TCPClient {
     {
 
     }
+    TCPClient(String IP_ADDR)
+    {
+        TCP_SERVER_IP = IP_ADDR;
+    }
     private void initThread()
     {
 
@@ -34,7 +39,7 @@ public class TCPClient {
         thread = new Thread(new Runnable() {
             public void run ()
             {
-                loc = threadrun("request\n", true);
+                loc = locThreadRun("request\n", true);
             }
         });
         thread.start();
@@ -46,6 +51,26 @@ public class TCPClient {
         }
         return null;
     }
+
+    public Location sendHeartbeat(String address)
+    {
+        TCP_SERVER_IP = address;
+        thread = new Thread(new Runnable() {
+            public void run ()
+            {
+                threadRun("0000000\n");
+            }
+        });
+        thread.start();
+        try {
+            thread.join();
+            return loc;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public Location getMyLocationEstimate(final List<ScanResult> nodes)
     {
 
@@ -67,7 +92,7 @@ public class TCPClient {
                             rssiList.append(',');
                         }
                     }
-                    loc = threadrun("location_p " + macList + ' ' + channelList + ' ' + rssiList + '\n', false);
+                    loc = locThreadRun("location_p " + macList + ' ' + channelList + ' ' + rssiList + '\n', false);
                 } else
                     loc = null;
             }
@@ -87,7 +112,7 @@ public class TCPClient {
         TCP_SERVER_IP = ip;
         TCP_SERVER_PORT = port;
     }
-    private Location threadrun(String sendString, Boolean getTime) {
+    private Location locThreadRun(String sendString, Boolean getTime) {
         Location curLoc = new Location("");
         try {
             if (socketChannel == null || !socketChannel.isOpen())
@@ -104,11 +129,15 @@ public class TCPClient {
                 while(outBuf.hasRemaining()) {
                     socketChannel.write(outBuf);
                 }
-                int readbytes = socketChannel.read(inBuff);
+                int readBytes = socketChannel.read(inBuff);
+                byte[] byteArray = new byte[readBytes];
+                inBuff.position(0);
+                inBuff.get(byteArray, 0, readBytes);
+
                 socketChannel.close();
-                if (readbytes > 0)
+                if (readBytes > 0)
                 {
-                    curLoc = new LocationParser(new String(inBuff.array()), getTime).getloc();
+                    curLoc = new LocationParser(new String(byteArray), getTime).getloc();
                     curLoc.setProvider(sendString);
                 }
                 return curLoc;
@@ -126,6 +155,63 @@ public class TCPClient {
         }
         curLoc.setProvider("returning Null");
         return curLoc;
+    }
+
+    private void threadRun(String sendString) {
+        try {
+            if (socketChannel == null || !socketChannel.isOpen()) {
+                socketChannel = SocketChannel.open();
+                socketChannel.configureBlocking(false);
+            }
+            if (!socketChannel.isConnected()) {
+                socketChannel.connect(new InetSocketAddress(TCP_SERVER_IP, TCP_SERVER_PORT));
+                Log.v("sockets: ","Beginning Connection");
+                while(! socketChannel.finishConnect() )
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                Log.v("sockets: ","Finishing Connection");
+            }
+            ByteBuffer inBuff = ByteBuffer.allocate(1024);
+            ByteBuffer outBuf = ByteBuffer.allocate(1024);
+            outBuf.clear();
+            outBuf.put(sendString.getBytes());
+
+            outBuf.flip();
+            try {
+                while(outBuf.hasRemaining()) {
+                    socketChannel.write(outBuf);
+                }
+                int readBytes = socketChannel.read(inBuff);
+                if (readBytes > 0) {
+                    byte[] byteArray = new byte[readBytes];
+                    inBuff.position(0);
+                    inBuff.get(byteArray, 0, readBytes);
+
+                    Log.v("TCP longDistClient: ", new String(byteArray));
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.v("sockets: ", "Connection Lost");
+                socketChannel.close();
+                socketChannel = SocketChannel.open();
+                socketChannel.connect(new InetSocketAddress(TCP_SERVER_IP, TCP_SERVER_PORT));
+                Log.v("sockets: ", "Beginning Connection");
+                while(! socketChannel.finishConnect() )
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ee) {
+                        ee.printStackTrace();
+                    }
+                Log.v("sockets: ", "Finished Connection");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
 
