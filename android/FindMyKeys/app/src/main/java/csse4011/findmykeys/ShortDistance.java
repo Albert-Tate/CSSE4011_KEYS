@@ -1,4 +1,4 @@
-package com.mikaljrue.tcptesting;
+package csse4011.findmykeys;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -93,15 +93,50 @@ public class ShortDistance implements SensorEventListener {
             if (success) {
                 float orientation[] = new float[3];
                 SensorManager.getOrientation(R, orientation);
-                azimut = (int) Math.round(Math.toDegrees(orientation[0]));
+                azimut = 180-compassHeading(orientation[0], orientation[1], orientation[2]);
             }
         }
     }
+
+
+
+    private int compassHeading(float alpha, float beta, float gamma ) {
+        double degtorad = Math.PI / 180; // Degree-to-Radian conversion
+
+        double _x = beta; // beta value
+        double _y = gamma; // gamma value
+        double _z = alpha; // alpha value
+
+        double cX = Math.cos( _x );
+        double cY = Math.cos( _y );
+        double cZ = Math.cos( _z );
+        double sX = Math.sin( _x );
+        double sY = Math.sin( _y );
+        double sZ = Math.sin( _z );
+
+        // Calculate Vx and Vy components
+        double Vx = - cZ * sY - sZ * sX * cY;
+        double Vy = - sZ * sY + cZ * sX * cY;
+
+        // Calculate compass heading
+        double compassHeading = Math.atan( Vx / Vy );
+
+        // Convert compass heading to use whole unit circle
+        if( Vy < 0 ) {
+            compassHeading += Math.PI;
+        } else if( Vx < 0 ) {
+            compassHeading += 2 * Math.PI;
+        }
+
+        return (int) Math.round((compassHeading * ( 180 / Math.PI )));
+
+    }
+
     public void onAccuracyChanged(Sensor sensor, int accuracy) {  }
 
-    public ShortDistance(Context app, WifiManager wifiManagerPar, SensorManager sensorManagerPar, final DebugCallback call)
+    public ShortDistance(Context appv, WifiManager wifiManagerPar, SensorManager sensorManagerPar, final DebugCallback call)
     {
-        app = app;
+        app = appv;
         callb = call;
         wifiManager = wifiManagerPar;
         mSensorManager = sensorManagerPar;
@@ -117,27 +152,12 @@ public class ShortDistance implements SensorEventListener {
                 new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
 
         String dateStamp = (DateFormat.format("dd-MM-yyyy-hh-mm-ss", new java.util.Date()).toString());
-        fileIO = new FileIO("/Android/data/com.CSSE4011.Lab7/files/",String.format("audio-%s.txt",dateStamp));
+//        fileIO = new FileIO("/Android/data/com.CSSE4011.Lab7/files/",String.format("audio-%s.txt",dateStamp));
         datastore = new RssiDsp();
 
 
         wifiManager.startScan();
-        thread = new Thread(new Runnable() {
-            public void run ()
-            {
-                while (true) {
-                    try {
-                        Thread.sleep(10000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    //connectToAP();
 
-                }
-
-            }
-        });
-        thread.start();
     }
 
     public int processData() {
@@ -216,7 +236,7 @@ public class ShortDistance implements SensorEventListener {
                     Log.v("SSID ", info.SSID);
                     rssi = info.level;
                     datastore.add((int) azimut, (int) rssi);
-                    fileIO.writeToFile(String.format("%d, %d\n", (int) azimut, (int) rssi));
+//                    fileIO.writeToFile(String.format("%d, %d\n", (int) azimut, (int) rssi));
                     callb.printString(String.format("%d, %d\n", (int) azimut, (int)rssi));
 
                 }

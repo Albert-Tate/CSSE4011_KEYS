@@ -6,7 +6,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.hardware.SensorManager;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,6 +19,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -24,8 +27,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-
-import java.io.File;
+import android.os.Handler;
 
 
 public class WebViewActivity extends Activity {
@@ -41,6 +43,12 @@ public class WebViewActivity extends Activity {
     private GoogleMap mMap1;
     private LatLng UQ = new LatLng(-27.494908, 153.012023);
 
+    private SensorManager mSensorManager;
+    ShortDistance shortThread;
+    WifiManager wifiManager;
+    TextView keyDegreeText;
+    Thread keyDegreeThread;
+    private Handler mHandler;
 
 
     @Override
@@ -50,11 +58,61 @@ public class WebViewActivity extends Activity {
         getActionBar().hide();
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
-
+        mHandler = new Handler();
         setupMap();
+        setupShortDistance();
         setupWebView();
+
         myWebView.loadUrl("javascript:hello();");
 
+    }
+
+    private void setupShortDistance(){
+        keyDegreeText = (TextView) findViewById(R.id.keyDegree);
+        wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+        shortThread = new ShortDistance(this, wifiManager, mSensorManager, new ShortDistance.DebugCallback() {
+            @Override
+            public void printString(String str) {
+                mHandler.post(new updateUIThread(str));
+            }
+        });
+        keyDegreeThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        Thread.sleep(10000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    int degree = shortThread.processData();
+                    if (degree != -90) {
+                        mHandler.post(new updateUIThread("Key Degree " + degree));
+                        Log.d("keyDegree", "Key Degree " + degree);
+                        shortThread.resetData();
+                    } else {
+                        mHandler.post(new updateUIThread("Processing"));
+                        Log.d("keyDegree", "processing");
+
+                    }
+                }
+            }
+        });
+        keyDegreeThread.start();
+
+    }
+
+    class updateUIThread implements Runnable {
+        private String msg;
+
+        public updateUIThread(String str) {
+            this.msg = str;
+        }
+        @Override
+        public void run() {
+            keyDegreeText.setText(msg + "\n" + keyDegreeText.getText());
+        }
     }
 
     private void setupMap() {
@@ -124,12 +182,14 @@ public class WebViewActivity extends Activity {
     public void onPause() {
         myWebView.getSettings().setJavaScriptEnabled(false);
         super.onPause();
+        shortThread.onPause();
     }
 
     @Override
     public void onResume() {
         super.onResume();
         myWebView.getSettings().setJavaScriptEnabled(true);
+        shortThread.onResume(this);
     }
 
     @Override

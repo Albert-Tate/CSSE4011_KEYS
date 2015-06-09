@@ -1,4 +1,4 @@
-package com.mikaljrue.tcptesting;
+package csse4011.findmykeys;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -25,7 +25,7 @@ public class FileIO {
 	    	Log.d("FileIO","Media writable");
 	    }
 		sdCard = Environment.getExternalStorageDirectory();
-	    dir = new File ("/storage/extSdCard" +path);
+	    dir = new File ("/storage/sdcard1" +path);
 	}
 
 public void writeToFile(String s){

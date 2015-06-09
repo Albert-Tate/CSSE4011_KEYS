@@ -95,6 +95,7 @@ public class MapActivity extends Activity implements
 
         setupMap();
         setupText();
+        setupTCP();
 
         setOutlines(R.id.star, R.id.info);
         applySystemWindowsBottomInset(R.id.container);
@@ -114,11 +115,15 @@ public class MapActivity extends Activity implements
             }
         });
 
-        TCPClientStart();
         createLocationListener();
     }
 
+    private void setupTCP() {
 
+        wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        client = new TCPClient();
+
+    }
 
     private void createLocationListener() {
 
@@ -129,6 +134,13 @@ public class MapActivity extends Activity implements
             public void onLocationChanged(Location location) {
                 // Called when a new location is found by the network location provider.
                 myLocation = location;
+
+                Location loc = client.getKeyLocationEstimate();
+
+//                Location loc = client.getMyLocationEstimate(wifiManager.getScanResults());
+                if(loc != null) {
+
+                }
 
                 if (mMap != null) {
                     mMap.clear();
@@ -429,15 +441,8 @@ public class MapActivity extends Activity implements
 
     }
 
-    private void TCPClientStart() {
-        client = new TCPClient();
-        wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-        scanNodes();
-    }
 
-    private void scanNodes() {
-        wifiManager.startScan();
-    }
+
 
     public void requestKeyPos(View view)
     {

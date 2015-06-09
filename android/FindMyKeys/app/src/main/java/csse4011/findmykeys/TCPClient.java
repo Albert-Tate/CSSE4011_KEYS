@@ -1,4 +1,4 @@
-package com.mikaljrue.tcptesting;
+package csse4011.findmykeys;
 
 import android.location.Location;
 import android.net.wifi.ScanResult;

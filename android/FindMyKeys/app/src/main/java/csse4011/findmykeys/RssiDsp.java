@@ -1,4 +1,4 @@
-package com.mikaljrue.tcptesting;
+package csse4011.findmykeys;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -101,14 +101,14 @@ public class RssiDsp {
             }
         }
         //Calculate SMA
-        int SMA_WIDTH = 7; //User Var
+        int SMA_WIDTH = 6; //User Var
         int SMA_VAL = 0;
         for(int i = SMA_WIDTH; i < READ_COUNT; i++) {//Maybe start at SMA_WIDTH?
             for(int k = 0; k < SMA_WIDTH; k++) {
                 SMA_VAL += B_DATA[i - k][1];
             }
             SMA_VAL = SMA_VAL/SMA_WIDTH;
-            SMA[i][0] = B_DATA[i][0];
+            SMA[i][0] = B_DATA[i - SMA_WIDTH/2][0];
             SMA[i][1] = SMA_VAL;
             SMA_VAL = 0;
         }
@@ -122,7 +122,7 @@ public class RssiDsp {
             }
         }
 
-        return cur_ang - 180;
+        return cur_ang - 180 + 90; //Offset from data rep + antenna directivity offset
 
     }
 
