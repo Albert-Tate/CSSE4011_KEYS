@@ -52,24 +52,6 @@ public class TCPClient {
         return null;
     }
 
-    public Location sendHeartbeat(String address)
-    {
-        TCP_SERVER_IP = address;
-        thread = new Thread(new Runnable() {
-            public void run ()
-            {
-                threadRun("0000000\n");
-            }
-        });
-        thread.start();
-        try {
-            thread.join();
-            return loc;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
 
     public Location getMyLocationEstimate(final List<ScanResult> nodes)
     {
@@ -157,62 +139,7 @@ public class TCPClient {
         return curLoc;
     }
 
-    private void threadRun(String sendString) {
-        try {
-            if (socketChannel == null || !socketChannel.isOpen()) {
-                socketChannel = SocketChannel.open();
-                socketChannel.configureBlocking(false);
-            }
-            if (!socketChannel.isConnected()) {
-                socketChannel.connect(new InetSocketAddress(TCP_SERVER_IP, TCP_SERVER_PORT));
-                Log.v("sockets: ","Beginning Connection");
-                while(! socketChannel.finishConnect() )
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                Log.v("sockets: ","Finishing Connection");
-            }
-            ByteBuffer inBuff = ByteBuffer.allocate(1024);
-            ByteBuffer outBuf = ByteBuffer.allocate(1024);
-            outBuf.clear();
-            outBuf.put(sendString.getBytes());
 
-            outBuf.flip();
-            try {
-                while(outBuf.hasRemaining()) {
-                    socketChannel.write(outBuf);
-                }
-                int readBytes = socketChannel.read(inBuff);
-                if (readBytes > 0) {
-                    byte[] byteArray = new byte[readBytes];
-                    inBuff.position(0);
-                    inBuff.get(byteArray, 0, readBytes);
-
-                    Log.v("TCP longDistClient: ", new String(byteArray));
-                }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                Log.v("sockets: ", "Connection Lost");
-                socketChannel.close();
-                socketChannel = SocketChannel.open();
-                socketChannel.connect(new InetSocketAddress(TCP_SERVER_IP, TCP_SERVER_PORT));
-                Log.v("sockets: ", "Beginning Connection");
-                while(! socketChannel.finishConnect() )
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException ee) {
-                        ee.printStackTrace();
-                    }
-                Log.v("sockets: ", "Finished Connection");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
 
 
 

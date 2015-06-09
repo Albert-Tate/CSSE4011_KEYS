@@ -47,7 +47,7 @@ public class TCPWrapper extends Activity  {
 
 
         mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
-         shortThread = new ShortDistance(wifiManager, mSensorManager,
+         shortThread = new ShortDistance(this, wifiManager, mSensorManager,
                  new ShortDistance.DebugCallback() {
                      @Override
                      public void printString(String str) {
@@ -56,6 +56,15 @@ public class TCPWrapper extends Activity  {
                      }
                  });
 
+    }
+
+    public void resetDataStore(View view) {
+        shortThread.resetData();
+    }
+
+
+    public void processDataStore(View view) {
+        updateConversationHandler.post(new updateUIThread("Estimated angle: " + shortThread.processData()));
     }
 
     @Override
@@ -89,7 +98,7 @@ public class TCPWrapper extends Activity  {
 
     protected void onResume() {
         super.onPause();
-        shortThread.onResume();
+        shortThread.onResume(this);
     }
 
 
