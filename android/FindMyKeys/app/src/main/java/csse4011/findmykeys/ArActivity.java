@@ -19,50 +19,79 @@ package csse4011.findmykeys;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
+import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.ActivityOptions;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Outline;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.graphics.Palette;
+import android.transition.Explode;
 import android.transition.Transition;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.ViewOutlineProvider;
+import android.view.Window;
 import android.view.WindowInsets;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
+import android.webkit.JavascriptInterface;
+import android.webkit.PermissionRequest;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import csse4011.findmykeys.ui.AnimatedPathView;
-import csse4011.findmykeys.ui.TransitionAdapter;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-public class DetailActivity extends Activity {
+import csse4011.findmykeys.ui.AnimatedPathView;
+import csse4011.findmykeys.ui.TransitionAdapter;
+
+public class ArActivity extends Activity {
+
+
+    private String TAG = "ArActivity";
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_detail);
+
+//        getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
+//        getWindow().setExitTransition(new Explode());
+
+
+        setContentView(R.layout.activity_ar);
 
         Bitmap photo = setupPhoto(getIntent().getIntExtra("photo", R.drawable.photo1));
 
         colorize(photo);
 
-        setupMap();
         setupText();
 
         setOutlines(R.id.star, R.id.info);
         applySystemWindowsBottomInset(R.id.container);
+
 
         getWindow().getEnterTransition().addListener(new TransitionAdapter() {
             @Override
@@ -80,8 +109,11 @@ public class DetailActivity extends Activity {
         });
     }
 
+
+
     @Override
     public void onBackPressed() {
+
         ImageView hero = (ImageView) findViewById(R.id.photo);
         ObjectAnimator color = ObjectAnimator.ofArgb(hero.getDrawable(), "tint",
                 0, getResources().getColor(R.color.photo_tint));
@@ -101,19 +133,11 @@ public class DetailActivity extends Activity {
         TextView titleView = (TextView) findViewById(R.id.title);
         titleView.setText(getIntent().getStringExtra("title"));
 
+        TextView descriptionView = (TextView) findViewById(R.id.description);
+        descriptionView.setText(getIntent().getStringExtra("description"));
     }
 
-    private void setupMap() {
-        GoogleMap map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
 
-        double lat = getIntent().getDoubleExtra("lat", 37.6329946);
-        double lng = getIntent().getDoubleExtra("lng", -122.4938344);
-        float zoom = getIntent().getFloatExtra("zoom", 15.0f);
-
-        LatLng position = new LatLng(lat, lng);
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(position, zoom));
-        map.addMarker(new MarkerOptions().position(position));
-    }
 
     private void setOutlines(int star, int info) {
         final int size = getResources().getDimensionPixelSize(R.dimen.floating_button_size);
@@ -137,9 +161,9 @@ public class DetailActivity extends Activity {
             public WindowInsets onApplyWindowInsets(View view, WindowInsets windowInsets) {
                 DisplayMetrics metrics = getResources().getDisplayMetrics();
                 if (metrics.widthPixels < metrics.heightPixels) {
-                    view.setPadding(0, 0, 0, 0);
+                    view.setPadding(0, 0, 0, windowInsets.getSystemWindowInsetBottom());
                 } else {
-                    view.setPadding(0, 0, 0, 0);
+                    view.setPadding(0, 0, windowInsets.getSystemWindowInsetRight(), 0);
                 }
                 return windowInsets.consumeSystemWindowInsets();
             }
@@ -157,6 +181,8 @@ public class DetailActivity extends Activity {
         TextView titleView = (TextView) findViewById(R.id.title);
         titleView.setTextColor(palette.getVibrantColor().getRgb());
 
+        TextView descriptionView = (TextView) findViewById(R.id.description);
+        descriptionView.setTextColor(palette.getLightVibrantColor().getRgb());
 
         colorRipple(R.id.info, palette.getDarkMutedColor().getRgb(),
                 palette.getDarkVibrantColor().getRgb());
@@ -211,11 +237,15 @@ public class DetailActivity extends Activity {
     }
 
     public void showInformation(View view) {
-        toggleInformationView(view);
+        Intent intent = new Intent(this, WebViewActivity.class);
+        startActivity(intent,
+                ActivityOptions.makeSceneTransitionAnimation(this).toBundle());
+//        toggleInformationView(view);
     }
 
     private void toggleInformationView(View view) {
         final View infoContainer = findViewById(R.id.information_container);
+        final View infoContainer1 = findViewById(R.id.information_container1);
 
         int cx = (view.getLeft() + view.getRight()) / 2;
         int cy = (view.getTop() + view.getBottom()) / 2;
@@ -224,27 +254,33 @@ public class DetailActivity extends Activity {
         Animator reveal;
         if (infoContainer.getVisibility() == View.INVISIBLE) {
             infoContainer.setVisibility(View.VISIBLE);
+            infoContainer1.setVisibility(View.VISIBLE);
+
             reveal = ViewAnimationUtils.createCircularReveal(
                     infoContainer, cx, cy, 0, radius);
             reveal.setInterpolator(new AccelerateInterpolator(2.0f));
-        } else {
-            reveal = ViewAnimationUtils.createCircularReveal(
-                    infoContainer, cx, cy, radius, 0);
-            reveal.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    infoContainer.setVisibility(View.INVISIBLE);
-                }
-            });
-            reveal.setInterpolator(new DecelerateInterpolator(2.0f));
+
+//        } else {
+//            reveal = ViewAnimationUtils.createCircularReveal(
+//                    infoContainer, cx, cy, radius, 0);
+//            reveal.addListener(new AnimatorListenerAdapter() {
+//                @Override
+//                public void onAnimationEnd(Animator animation) {
+//                    infoContainer.setVisibility(View.INVISIBLE);
+//                }
+//            });
+//            reveal.setInterpolator(new DecelerateInterpolator(2.0f));
+
+            reveal.setDuration(600);
+            reveal.start();
         }
-        reveal.setDuration(600);
-        reveal.start();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.detail, menu);
+        getMenuInflater().inflate(R.menu.map, menu);
         return true;
     }
+
+
 }

@@ -45,24 +45,28 @@ public class MainActivity extends Activity {
     @SuppressWarnings("UnusedDeclaration")
     public void showPhoto(View view) {
         Intent intent = new Intent();
-        intent.setClass(this, DetailActivity.class);
 
         switch (view.getId()) {
             case R.id.show_photo_1:
                 intent.putExtra("lat", 37.6329946);
                 intent.putExtra("lng", -122.4938344);
                 intent.putExtra("zoom", 14.0f);
-                intent.putExtra("title", "Pacifica Pier");
+                intent.putExtra("title", "Locate Long Distance");
                 intent.putExtra("description", getResources().getText(R.string.lorem));
                 intent.putExtra("photo", R.drawable.photo1);
+
+                intent.setClass(this, MapActivity.class);
+
                 break;
             case R.id.show_photo_2:
                 intent.putExtra("lat", 37.73284);
                 intent.putExtra("lng", -122.503065);
                 intent.putExtra("zoom", 15.0f);
-                intent.putExtra("title", "Pink Flamingo");
+                intent.putExtra("title", "Locate Short Distance");
                 intent.putExtra("description", getResources().getText(R.string.lorem));
-                intent.putExtra("photo", R.drawable.photo2);
+                intent.putExtra("photo", R.drawable.photo0);
+
+                intent.setClass(this, ArActivity.class);
                 break;
 
         }

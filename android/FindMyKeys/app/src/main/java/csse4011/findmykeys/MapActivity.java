@@ -1,12 +1,12 @@
 /**
  * Copyright 2014 Google
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p/>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,16 +20,23 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
+import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Outline;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.v7.graphics.Palette;
 import android.transition.Transition;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewAnimationUtils;
@@ -40,16 +47,43 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
-
 import csse4011.findmykeys.ui.AnimatedPathView;
 import csse4011.findmykeys.ui.TransitionAdapter;
 
-public class MapActivity extends Activity {
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+public class MapActivity extends Activity implements
+        OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener {
+
+    private CharSequence mTitle;
+    private MapFragment mMapFragment;
+    private GoogleMap mMap;
+    private LatLng UQ = new LatLng(-27.494908, 153.012023);
+    private Location mLastLocation;
+    private Location myLocation;
+    private GoogleApiClient mGoogleApiClient;
+
+
+    Location lockey;
+    Location locPhone;
+
+
+    // TCP stuff
+    TCPClient client = null;
+    WifiManager wifiManager;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -79,6 +113,117 @@ public class MapActivity extends Activity {
                 getWindow().getEnterTransition().removeListener(this);
             }
         });
+
+        TCPClientStart();
+        createLocationListener();
+    }
+
+
+
+    private void createLocationListener() {
+
+        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+        // Define a listener that responds to location updates
+        LocationListener locationListener = new LocationListener() {
+            public void onLocationChanged(Location location) {
+                // Called when a new location is found by the network location provider.
+                myLocation = location;
+
+                if (mMap != null) {
+                    mMap.clear();
+                    if (myLocation != null) {
+                        mMap.addMarker(new MarkerOptions().position(new LatLng(myLocation.getLatitude(), myLocation.getLongitude())).title("phone").snippet("Phone GPS"));
+                        // Instantiates a new CircleOptions object and defines the center and radius
+                        CircleOptions circleOptions1 = new CircleOptions()
+                                .center(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()))
+                                .radius(50)
+                                .strokeColor(Color.argb(180, 84, 160, 168))
+                                .fillColor(Color.argb(180, 84, 160, 168)); // In meters
+
+
+                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()), 12));
+
+
+// Get back the mutable Circle
+                        Circle circle1 = mMap.addCircle(circleOptions1);
+                    }
+
+//                    locPhone = client.getMyLocationEstimate(wifi.getScanResults());
+                    if (locPhone != null) {
+                        mMap.addMarker(new MarkerOptions().position(new LatLng(locPhone.getLatitude(), locPhone.getLongitude())).title("phone").snippet("Phone Wifi"));
+                        // Instantiates a new CircleOptions object and defines the center and radius
+                        CircleOptions circleOptions2 = new CircleOptions()
+                                .center(new LatLng(locPhone.getLatitude(), locPhone.getLongitude()))
+                                .radius(100)
+                                .strokeColor(Color.argb(180, 84, 160, 168))
+                                .fillColor(Color.argb(180, 84, 160, 168)); // In meters
+
+
+                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(locPhone.getLatitude(), locPhone.getLongitude()), 12));
+
+//                        double angle = angleFromCoordinate(locPhone.getLatitude(), locPhone.getLongitude(),UQ.latitude, UQ.longitude );
+//                        mMap.addMarker(new MarkerOptions()
+//                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.arrow))
+//                                .position(new LatLng(locPhone.getLatitude(),locPhone.getLongitude()))
+//                                .flat(true)
+//                                .rotation((float)angle - 90));
+
+// Get back the mutable Circle
+                        Circle circle1 = mMap.addCircle(circleOptions2);
+                    }
+//                    lockey = client.getKeyLocationEstimate();
+                    if (lockey != null) {
+                        Log.v("keyPos", "found key");
+                        mMap.addMarker(new MarkerOptions().position(new LatLng(lockey.getLatitude(), lockey.getLongitude())).title("phone").snippet("Keys"));
+                        // Instantiates a new CircleOptions object and defines the center and radius
+                        CircleOptions circleOptions3 = new CircleOptions()
+                                .center(new LatLng(lockey.getLatitude(), lockey.getLongitude()))
+                                .radius(500)
+                                .strokeColor(Color.argb(180, 84, 160, 168))
+                                .fillColor(Color.argb(180, 84, 160, 168)); // In meters
+
+                        double angle = angleFromCoordinate(myLocation.getLatitude(), myLocation.getLongitude(), lockey.getLatitude(), lockey.getLongitude());
+                        mMap.addMarker(new MarkerOptions()
+                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.arrow))
+                                .position(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()))
+                                .flat(true)
+                                .rotation((float) angle - 90));
+
+
+// Get back the mutable Circle
+                        Circle circle1 = mMap.addCircle(circleOptions3);
+                    } else {
+                        double angle = angleFromCoordinate(myLocation.getLatitude(), myLocation.getLongitude(), UQ.latitude, UQ.longitude);
+                        mMap.addMarker(new MarkerOptions()
+                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.arrow))
+                                .position(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()))
+                                .flat(true)
+                                .rotation((float) angle - 90));
+                        mMap.addMarker(new MarkerOptions().position(UQ).title("Keys").snippet("Location of keys"));
+//        // Instantiates a new CircleOptions object and defines the center and radius
+                        CircleOptions circleOptions = new CircleOptions()
+                                .center(UQ)
+                                .radius(800)
+                                .strokeColor(Color.argb(180, 80, 130, 168))
+                                .fillColor(Color.argb(180, 80, 130, 168)); // In meters
+                        Circle circle1 = mMap.addCircle(circleOptions);
+                    }
+                }
+            }
+
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+            }
+
+            public void onProviderEnabled(String provider) {
+            }
+
+            public void onProviderDisabled(String provider) {
+            }
+        };
+
+// Register the listener with the Location Manager to receive location updates
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
     }
 
     @Override
@@ -102,20 +247,15 @@ public class MapActivity extends Activity {
         TextView titleView = (TextView) findViewById(R.id.title);
         titleView.setText(getIntent().getStringExtra("title"));
 
-        TextView descriptionView = (TextView) findViewById(R.id.description);
-        descriptionView.setText(getIntent().getStringExtra("description"));
     }
 
     private void setupMap() {
-        GoogleMap map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
+        mMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
 
-        double lat = getIntent().getDoubleExtra("lat", 37.6329946);
-        double lng = getIntent().getDoubleExtra("lng", -122.4938344);
         float zoom = getIntent().getFloatExtra("zoom", 15.0f);
 
-        LatLng position = new LatLng(lat, lng);
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(position, zoom));
-        map.addMarker(new MarkerOptions().position(position));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(UQ, zoom));
+        mMap.addMarker(new MarkerOptions().position(UQ));
     }
 
     private void setOutlines(int star, int info) {
@@ -140,9 +280,9 @@ public class MapActivity extends Activity {
             public WindowInsets onApplyWindowInsets(View view, WindowInsets windowInsets) {
                 DisplayMetrics metrics = getResources().getDisplayMetrics();
                 if (metrics.widthPixels < metrics.heightPixels) {
-                    view.setPadding(0, 0, 0, windowInsets.getSystemWindowInsetBottom());
+                    view.setPadding(0, 0, 0, 0);
                 } else {
-                    view.setPadding(0, 0, windowInsets.getSystemWindowInsetRight(), 0);
+                    view.setPadding(0, 0, 0, 0);
                 }
                 return windowInsets.consumeSystemWindowInsets();
             }
@@ -160,8 +300,6 @@ public class MapActivity extends Activity {
         TextView titleView = (TextView) findViewById(R.id.title);
         titleView.setTextColor(palette.getVibrantColor().getRgb());
 
-        TextView descriptionView = (TextView) findViewById(R.id.description);
-        descriptionView.setTextColor(palette.getLightVibrantColor().getRgb());
 
         colorRipple(R.id.info, palette.getDarkMutedColor().getRgb(),
                 palette.getDarkVibrantColor().getRgb());
@@ -247,9 +385,78 @@ public class MapActivity extends Activity {
         reveal.start();
     }
 
+    private double angleFromCoordinate(double lat1, double long1, double lat2,
+                                       double long2) {
+
+        double dLon = (long2 - long1);
+
+        double y = Math.sin(dLon) * Math.cos(lat2);
+        double x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1)
+                * Math.cos(lat2) * Math.cos(dLon);
+
+        double brng = Math.atan2(y, x);
+
+        brng = Math.toDegrees(brng);
+        brng = (brng + 360) % 360;
+        brng = 360 - brng;
+
+        return brng;
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.detail, menu);
+        getMenuInflater().inflate(R.menu.map, menu);
         return true;
     }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+
+    }
+
+    private void TCPClientStart() {
+        client = new TCPClient();
+        wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        scanNodes();
+    }
+
+    private void scanNodes() {
+        wifiManager.startScan();
+    }
+
+    public void requestKeyPos(View view)
+    {
+        Location loc = client.getKeyLocationEstimate();
+        String report = "\nRead:" + loc.getProvider() + "\n\tlat: " + loc.getLatitude()
+                + "\n\tlon: " + loc.getLongitude() + "\n\tAcc: " + loc.getAccuracy() + "m\n\ttime: " + loc.getTime();
+        Log.d("TCP", report);
+    }
+
+    public void requestMyPos(View view) {
+        if (client == null)
+            client = new TCPClient();
+        Location loc = client.getMyLocationEstimate(wifiManager.getScanResults());
+        if (loc != null) {
+            String report = "\nRead:" + loc.getProvider() + "\n\tlat: " + loc.getLatitude()
+                    + "\n\tlon: " + loc.getLongitude() + "\n\tAcc: " + loc.getAccuracy() + "m;";
+            Log.d("TCP", report);
+
+        }
+    }
+
 }

@@ -8,4 +8,9 @@
     <string name="info_button_description">Show photo information</string>
     <string name="star_button_description">Fave this photo</string>
     <string name="photo_description">Photo</string>
+    <string name="ShortDistance">Locate Short Distance</string>
+    <string name="LongDistance">Locate Long Distance</string>
+    <string name="title_activity_web_view">WebViewActivity</string>
+
+    <string name="hello_world">Hello world!</string>
 </resources>

@@ -28,7 +28,7 @@
             <TextView
                 style="@style/CardTitle"
                 android:id="@+id/show_photo_1"
-                android:text="Pacifica Pier" />
+                android:text="@string/LongDistance" />
 
         </csse4011.findmykeys.ui.CardFrameLayout>
 
@@ -39,12 +39,12 @@
                 style="@style/CardPhoto"
                 android:id="@id/photo"
                 android:transitionName="photo2"
-                android:src="@drawable/photo2" />
+                android:src="@drawable/photo0" />
 
             <TextView
                 style="@style/CardTitle"
                 android:id="@+id/show_photo_2"
-                android:text="Pink Flamingo" />
+                android:text="@string/ShortDistance" />
 
         </csse4011.findmykeys.ui.CardFrameLayout>
 

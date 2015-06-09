@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+  <title>AR/VR Where's my keys Google Cardboard</title>
+  <style>
+    body {
+      margin: 0px;
+      overflow: hidden;
+    }
+    
+    a,
+    a:link,
+    a:visited,
+    a:hover,
+    a:active {
+      text-decoration: inherit;
+      font-family: inherit;
+      font-size: inherit;
+      background-color: inherit;
+      color: inherit;
+    }
+    
+    #container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #000000;
+    }
+    
+    #container:-webkit-full-screen {
+      width: 100%
+    }
+    
+    #container:-moz-full-screen {
+      width: 100%
+    }
+    
+    #container:-ms-full-screen {
+      width: 100%
+    }
+    
+    #container:-o-full-screen {
+      width: 100%
+    }
+    
+    #container:full-screen {
+      width: 100%
+    }
+    
+    #webgl {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+    
+    video {
+      position: absolute;
+      visibility: hidden;
+    }
+    
+    #leftcam {
+      position: absolute;
+    }
+    
+    #rightcam {
+      position: absolute;
+    }
+    
+    #toppanel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      background-color: #222222;
+    }
+    
+    #bottompanel {
+      position: absolute;
+      left: 0;
+      background-color: #222222;
+    }
+    
+    #toastleft,
+    #toastright {
+      position: absolute;
+      padding-left: 10px;
+      padding-top: 10px;
+      background-color: #222222;
+      overflow: 'hidden';
+      visibility: hidden;
+      opacity: 0.6;
+      filter: alpha(opacity=60);
+      color: #00dddd;
+      text-align: left;
+      /* font-family: "Arial", "Sans-serif"; */
+      
+      font-family: "Courier New", Courier, monospace;
+      font-weight: bold;
+      font-size: 12px;
+    }
+    
+    #infoleft,
+    #inforight {
+      position: absolute;
+      width: 100px;
+      height: 20px;
+      background-color: transparent;
+      overflow: visible;
+      visibility: hidden;
+      opacity: 0.3;
+      filter: alpha(opacity=30);
+      color: #00dddd;
+      text-align: center;
+      // font-family:  "Courier New", Courier, monospace;
+      font-family: "Arial", "Sans-serif";
+      font-weight: bold;
+      font-size: 12px;
+      whiteSpace: nowrap;
+    }
+    
+    #complexityzonelinkleft,
+    #complexityzonelinkright {
+      position: absolute;
+      width: 200px;
+      height: 40px;
+      background-color: transparent;
+      overflow: visible;
+      opacity: 0.25;
+      filter: alpha(opacity=25);
+      color: #00dddd;
+      text-align: center;
+      font-family: "Arial", "Sans-serif";
+      font-size: 12px;
+      whiteSpace: nowrap;
+    }
+  </style>
+  <script>
+    if ((window.location.protocol != 'file:') && (window.location.hostname != '127.0.0.1')) {
+      (function (i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r;
+        i[r] = i[r] || function () {
+          (i[r].q = i[r].q || []).push(arguments)
+        }, i[r].l = 1 * new Date();
+        a = s.createElement(o),
+          m = s.getElementsByTagName(o)[0];
+        a.async = 1;
+        a.src = g;
+        m.parentNode.insertBefore(a, m)
+      })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+      ga('create', 'UA-55693751-1', 'auto');
+      ga('send', 'pageview');
+    }
+  </script>
+</head>
+
+<body>
+  <div id="container">
+    <video id="video" style="visibility: hidden;" autoplay="" width="800" height="600"></video>
+    <canvas id="leftcam" width="800" height="600"></canvas>
+    <canvas id="rightcam" width="800" height="600"></canvas>
+    <div id="webgl"></div>
+    <div id="toppanel"></div>
+    <div id="bottompanel"></div>
+    <div id="toastleft" style="visibility: visible; left: 80px; top: 80px; width: 200px; height: 200px;">Loading...</div>
+    <div id="toastright"></div>
+    <div id="infoleft"></div>
+    <div id="inforight"></div>
+    <div id="complexityzonelinkleft">
+      <a href=""></a>
+    </div>
+    <div id="complexityzonelinkright">
+      <a href=""></a>
+    </div>
+    <div id="centerline" style="position: absolute; width: 3px; background-color: #222222;"></div>
+    <div id="lefteyetopcorner" style="position: absolute; top: -100px; left: -100px; width: 100px; height: 100px; background-color: transparent; overflow: hidden;">
+      <div style="position: absolute; left: 0px; top: -100px; width: 100px; height: 100px; background-color: transparent; border-right: 100px solid #222222; border-top: 100px solid #222222; border-radius: 0 200px 0 0; ">
+      </div>
+    </div>
+    <div id="righteyetopcorner" style="position: absolute; top: -100px; left: -100px; width: 100px; height: 100px; background-color: transparent; overflow: hidden;">
+      <div style="position: absolute; left: -100px; top: -100px; width: 100px; height: 100px; background-color: transparent; border-left: 100px solid #222222; border-top: 100px solid #222222; border-radius: 200px 0 0 0; ">
+      </div>
+    </div>
+    <div id="lefteyebottomcorner" style="position: absolute; top: -100px; left: -100px; width: 100px; height: 100px; background-color: transparent; overflow: hidden;">
+      <div style="position: absolute; left: 0px; top: 0px; width: 100px; height: 100px; background-color: transparent; border-right: 100px solid #222222; border-bottom: 100px solid #222222; border-radius: 0 0 200px 0; ">
+      </div>
+    </div>
+    <div id="righteyebottomcorner" style="position: absolute; top: -100px; left: -100px; width: 100px; height: 100px; background-color: transparent; overflow: hidden;">
+      <div style="position: absolute; left: -100px; top: 0px; width: 100px; height: 100px; background-color: transparent; border-left: 100px solid #222222; border-bottom: 100px solid #222222; border-radius: 0 0 0 200px; ">
+      </div>
+    </div>
+  </div>
+
+  <script src="js/three.min.js"></script>
+  <script src="js/StereoEffect.js"></script>
+  <script src="js/DeviceOrientationControls.js"></script>
+  <script src="js/navigateControl.js"></script>
+  <script src="js/tween.js"></script>
+  <script>
+    THREE.StereoEffect = function (renderer) {
+
+      // API
+
+      this.separation = 2; // altered for extra 3d effect in Solar System visualisation
+
+      // internals
+
+      var _width, _height;
+
+      var _position = new THREE.Vector3();
+      var _quaternion = new THREE.Quaternion();
+      var _scale = new THREE.Vector3();
+
+      var _cameraL = new THREE.PerspectiveCamera();
+      var _cameraR = new THREE.PerspectiveCamera();
+
+      // initialization
+
+      renderer.autoClear = false;
+
+      this.setSizeSingleView = function (width, height) {
+
+        _width = width;
+        _height = height;
+
+        //renderer.setSize( width, height );
+
+      };
+
+      this.render = function (scene, camera) {
+
+        scene.updateMatrixWorld();
+
+        if (camera.parent === undefined) camera.updateMatrixWorld();
+
+        camera.matrixWorld.decompose(_position, _quaternion, _scale);
+
+        // left
+
+        _cameraL.fov = camera.fov;
+        //_cameraL.aspect = 0.5 * camera.aspect;
+        // keep aspect for proper ratio
+        _cameraL.aspect = camera.aspect;
+        _cameraL.near = camera.near;
+        _cameraL.far = camera.far;
+        _cameraL.updateProjectionMatrix();
+
+        _cameraL.position.copy(_position);
+        _cameraL.quaternion.copy(_quaternion);
+        _cameraL.translateX(-this.separation);
+        _cameraL.updateMatrixWorld();
+
+        // right
+
+        _cameraR.near = camera.near;
+        _cameraR.far = camera.far;
+        _cameraR.projectionMatrix = _cameraL.projectionMatrix;
+
+        _cameraR.position.copy(_position);
+        _cameraR.quaternion.copy(_quaternion);
+        _cameraR.translateX(this.separation);
+        _cameraR.updateMatrixWorld();
+
+        //
+
+        renderer.setViewport(0, 0, _width * 2, _height);
+        renderer.clear();
+
+        renderer.setViewport(0, 0, _width, _height);
+        renderer.render(scene, _cameraL);
+
+        renderer.setViewport(_width, 0, _width, _height);
+        renderer.render(scene, _cameraR);
+
+      };
+
+    };
+  </script>
+
+
+<script>
+var camera, scene, renderer, raycaster;
+var effect, controls;
+
+var container, divwebgl, leftcam, rightcam, toppanel, bottompanel, toastleft, toastright, infoleft, inforight, complexityzonelinkleft, complexityzonelinkright,
+  centerline, lefteyetopcorner, righteyetopcorner, lefteyebottomcorner, righteyebottomcorner;
+
+var screenWidth;
+var screenHeight;
+var screenHalfWidth;
+var screenHalfHeight;
+var verticalMargin;
+var cameraImage;
+var cameraImageContext;
+
+var leftCamCanvas;
+var leftCamContext;
+var rightCamCanvas;
+var rightCamContext;
+var video;
+
+var videoPlaying = false;
+var fullScreenRequested = false;
+
+var isMobile = (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) ? true : false;
+
+var lEarthDaysPerYear = 365.25;
+var AU = 26000; // 1 Astronomical Unit (Average distance between Sun and Earth) in 3d coordinate system.
+
+
+var surfaceGraph = null;
+var sunMesh = null;
+var keyMesh = null;
+
+var focusableObjects = [];
+var focusPlanet = null;
+var infoFDistance = 14; // (bad method) for correcting info text position in relation to object distance
+
+
+var clock = new THREE.Clock();
+
+var lastMs = Date.now();
+var toastCountDownMs = 0;
+var toastQueue = [];
+
+var setOrientationControlsDone = false;
+
+init();
+render();
+
+function hello() {
+  console.log("hello");
+}
+
+function init() {
+
+  raycaster = new THREE.Raycaster();
+
+  renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: true
+  });
+  renderer.setClearColor(0x000000, 0);
+  divwebgl = document.getElementById('webgl');
+  divwebgl.appendChild(renderer.domElement);
+
+  container = document.getElementById('container');
+  leftcam = document.getElementById('leftcam');
+  rightcam = document.getElementById('rightcam');
+  toppanel = document.getElementById('toppanel');
+  bottompanel = document.getElementById('bottompanel');
+  toastleft = document.getElementById('toastleft');
+  toastright = document.getElementById('toastright');
+  infoleft = document.getElementById('infoleft');
+  inforight = document.getElementById('inforight');
+  complexityzonelinkleft = document.getElementById('complexityzonelinkleft');
+  complexityzonelinkright = document.getElementById('complexityzonelinkright');
+
+  centerline = document.getElementById('centerline');
+  lefteyetopcorner = document.getElementById('lefteyetopcorner');
+  righteyetopcorner = document.getElementById('righteyetopcorner');
+  lefteyebottomcorner = document.getElementById('lefteyebottomcorner');
+  righteyebottomcorner = document.getElementById('righteyebottomcorner');
+
+  leftCamCanvas = document.getElementById("leftcam");
+  leftCamContext = leftCamCanvas.getContext("2d");
+  rightCamCanvas = document.getElementById("rightcam");
+  rightCamContext = rightCamCanvas.getContext("2d");
+  video = document.getElementById("video");
+
+  cameraImage = document.createElement('canvas');
+  cameraImage.setAttribute("width", "640");
+  cameraImage.setAttribute("height", "480");
+  cameraImage.width = 640;
+  cameraImage.height = 480;
+  cameraImageContext = cameraImage.getContext("2d");
+
+  effect = new THREE.StereoEffect(renderer);
+
+  scene = new THREE.Scene();
+
+  camera = new THREE.PerspectiveCamera(40, 1, 1, 20000);
+  camera.position.set(0, 1.850, 0);
+  camera.up = new THREE.Vector3(0, 1, 0);
+  scene.add(camera);
+
+  // Place us somewhere between Mars and Jupiter, from above
+  var orrerySunPosition = {
+    x: 20, // forward
+    y: -40, // up. 
+    z: 80 // right
+  };
+
+  var lCenter = new THREE.Vector3(orrerySunPosition.x, orrerySunPosition.y, orrerySunPosition.z);
+  // Don't orbit around Sun. Look around from camera's position instead.
+  lCenter.set(
+    camera.position.x,
+    camera.position.y - 0.2,
+    camera.position.z + 0.6
+  );
+  // Default PC controls when no deviceorientation.
+  controls = new THREE.navigateControl(camera, renderer.domElement, lCenter);
+
+  function setOrientationControls(e) {
+    if (!e.alpha) {
+      return;
+    }
+    if (!setOrientationControlsDone) {
+      setOrientationControlsDone = true;
+
+      camera.position.set(0, 1.850, 0);
+
+      controls = new THREE.DeviceOrientationControls(camera, true);
+      controls.connect();
+      controls.update();
+
+      container.addEventListener('click', function () {
+        fullscreen(container);
+        fullScreenRequested = true;
+      }, false);
+
+      window.removeEventListener('deviceorientation', setOrientationControls);
+    }
+  }
+
+  if (window.DeviceOrientationEvent) {
+    window.addEventListener('deviceorientation', setOrientationControls, true);
+  }
+
+  window.addEventListener('deviceorientation', function(event) {
+    var alpha = event.alpha;
+    var beta = event.beta;
+    var gamma = event.gamma;
+    var compDegree = compassHeading(alpha, beta, gamma);
+    console.log("Dir "+ compDegree);
+    // Do something
+  }, false);
+
+  var light;
+
+  light = new THREE.AmbientLight(0x444444);
+  scene.add(light);
+
+  light = new THREE.PointLight(0xffffff, 0.90);
+  light.position.set(orrerySunPosition.x-15, orrerySunPosition.y+40, orrerySunPosition.z-60);
+  scene.add(light);
+
+  var sphereSize = 5;
+  var pointLightHelper = new THREE.PointLightHelper( light, sphereSize );
+  // scene.add( pointLightHelper );
+
+  var axes = new THREE.AxisHelper( 10 );
+  scene.add( axes );
+
+  var dir = new THREE.Vector3( 1, 1, 0 );
+  var origin = new THREE.Vector3( 6, -1, 0 );
+  var length = 1;
+  var hex = 0xffff00;
+
+  var arrowHelper = new THREE.ArrowHelper( dir, origin, length, hex ,1.500, 1.500);
+  scene.add( arrowHelper );
+
+  // scene.add(new THREE.GridHelper(10000,1000));
+
+  var hideCam = false;
+  if (hideCam) {
+    var spaceGeometry = new THREE.SphereGeometry(1000, 128, 128);
+    var spaceMaterial = new THREE.MeshBasicMaterial({
+      color: 0x000000
+    });
+    spaceMaterial.side = THREE.DoubleSide;
+    var spaceMesh = new THREE.Mesh(spaceGeometry, spaceMaterial);
+    scene.add(spaceMesh);
+  }
+
+  var sunRadius = 6;
+  var sunGeometry = new THREE.SphereGeometry(sunRadius, 4, 4);
+  var sunMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffffff
+  });
+  sunMaterial.map = THREE.ImageUtils.loadTexture('images/texture_sun.jpg');
+  sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
+  sunMesh.position.x = orrerySunPosition.x; // forward
+  sunMesh.position.y = orrerySunPosition.y; // up
+  sunMesh.position.z = orrerySunPosition.z; // right
+  // scene.add(sunMesh);
+
+  sunMesh.solarSystemData = {
+    name: 'The Sun',
+    radius: sunRadius
+  };
+  // focusableObjects.push(sunMesh);
+
+  // Load in the mesh and add it to the scene.
+  var loader = new THREE.JSONLoader();
+  loader.load( "models/carkeys.json", function(geometry, materials) { 
+    var keyMaterial = new THREE.MeshFaceMaterial(materials);
+    keyMesh = new THREE.Mesh(geometry, keyMaterial);
+    console.log("in");
+    console.log(keyMesh);
+  }); 
+
+
+  loader.onLoadComplete=function(){
+    keyMesh.position.x = orrerySunPosition.x; // forward
+    keyMesh.position.y = orrerySunPosition.y; // up
+    keyMesh.position.z = orrerySunPosition.z; // right
+    scene.add(keyMesh);
+
+    keyMesh.solarSystemData = {
+    name: 'Keys',
+    radius: sunRadius
+  };  
+
+    focusableObjects.push(keyMesh);
+  };
+
+  window.addEventListener('resize', resize, false);
+  resize();
+}
+
+var degtorad = Math.PI / 180; // Degree-to-Radian conversion
+
+function compassHeading( alpha, beta, gamma ) {
+
+  var _x = beta  ? beta  * degtorad : 0; // beta value
+  var _y = gamma ? gamma * degtorad : 0; // gamma value
+  var _z = alpha ? alpha * degtorad : 0; // alpha value
+
+  var cX = Math.cos( _x );
+  var cY = Math.cos( _y );
+  var cZ = Math.cos( _z );
+  var sX = Math.sin( _x );
+  var sY = Math.sin( _y );
+  var sZ = Math.sin( _z );
+
+  // Calculate Vx and Vy components
+  var Vx = - cZ * sY - sZ * sX * cY;
+  var Vy = - sZ * sY + cZ * sX * cY;
+
+  // Calculate compass heading
+  var compassHeading = Math.atan( Vx / Vy );
+
+  // Convert compass heading to use whole unit circle
+  if( Vy < 0 ) {
+    compassHeading += Math.PI;
+  } else if( Vx < 0 ) {
+    compassHeading += 2 * Math.PI;
+  }
+
+  return compassHeading * ( 180 / Math.PI ); // Compass Heading (in degrees)
+
+}
+
+function resize() {
+  screenWidth = container.offsetWidth; //window.innerWidth;
+  screenHeight = container.offsetHeight; //window.innerHeight;
+  screenHalfWidth = ((screenWidth / 2) | 0);
+  screenHalfHeight = ((screenHeight / 2) | 0);
+  var horizontalMargin = 0;
+  // adjust margin so that we have a near 4:3 ratio.
+  verticalMargin = (((screenHeight - (screenHalfWidth / (4 / 3))) / 2) * 0.5) | 0;
+
+  camera.aspect = screenHalfWidth / (screenHeight - (2 * verticalMargin));
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(screenWidth, (screenHeight - (2 * verticalMargin))); // the total space for the viewport
+  effect.setSizeSingleView(screenHalfWidth, (screenHeight - (2 * verticalMargin)));
+
+  var cameraImageWidth = 800; //(screenHalfWidth - (2 * horizontalMargin));
+  var cameraImageHeight = 600; //(screenHeight - (2 * verticalMargin));
+
+  cameraImage.width = cameraImageWidth;
+  cameraImage.height = cameraImageHeight;
+  cameraImage.setAttribute("width", '' + cameraImageWidth);
+  cameraImage.setAttribute("height", '' + cameraImageHeight);
+  cameraImage.style.width = cameraImageWidth + 'px';
+  cameraImage.style.height = cameraImageHeight + 'px';
+
+  leftcam.style.left = horizontalMargin + 'px';
+  leftcam.style.top = verticalMargin + 'px';
+  leftcam.width = (screenHalfWidth - (2 * horizontalMargin));
+  leftcam.height = (screenHeight - (2 * verticalMargin));
+  leftcam.style.width = (screenHalfWidth - (2 * horizontalMargin)) + 'px';
+  leftcam.style.height = (screenHeight - (2 * verticalMargin)) + 'px';
+
+  rightcam.style.left = (screenHalfWidth + horizontalMargin) + 'px';
+  rightcam.style.top = verticalMargin + 'px';
+  rightcam.width = (screenHalfWidth - (2 * horizontalMargin));
+  rightcam.height = (screenHeight - (2 * verticalMargin));
+  rightcam.style.width = (screenHalfWidth - (2 * horizontalMargin)) + 'px';
+  rightcam.style.height = (screenHeight - (2 * verticalMargin)) + 'px';
+
+  divwebgl.style.left = 0 + 'px';
+  divwebgl.style.top = verticalMargin + 'px';
+  divwebgl.style.width = screenWidth + 'px';
+  divwebgl.style.height = (screenHeight - (2 * verticalMargin)) + 'px';
+
+  toppanel.style.width = screenWidth + 'px';
+  toppanel.style.height = verticalMargin + 'px';
+
+  bottompanel.style.top = (screenHeight - verticalMargin) + 'px';
+  bottompanel.style.width = screenWidth + 'px';
+  bottompanel.style.height = verticalMargin + 'px';
+
+  var lToastViewLeft = ((screenHalfWidth * 1) / 10);
+  var lToastViewTop = (((screenHeight - (2 * verticalMargin)) * 1) / 10);
+  var lToastViewWidth = ((screenHalfWidth * 4) / 10);
+  var lToastViewHeight = (((screenHeight - (2 * verticalMargin)) * 3) / 10);
+  toastleft.style.left = ((lToastViewLeft + 14) | 0) + 'px'; // 14 for making toast appear near.
+  toastleft.style.top = (verticalMargin + (lToastViewTop | 0)) + 'px';
+  toastleft.style.width = (lToastViewWidth | 0) + 'px';
+  toastleft.style.height = (lToastViewHeight | 0) + 'px';
+  if (isMobile) {
+    toastleft.style.fontSize = '11px';
+  }
+
+  toastright.style.left = (screenHalfWidth + ((lToastViewLeft - 14) | 0)) + 'px'; // -14 for making toast appear near.
+  toastright.style.top = (verticalMargin + (lToastViewTop | 0)) + 'px';
+  toastright.style.width = (lToastViewWidth | 0) + 'px';
+  toastright.style.height = (lToastViewHeight | 0) + 'px';
+  if (isMobile) {
+    toastright.style.fontSize = '11px';
+  }
+
+  infoleft.style.left = ((((screenHalfWidth / 2) | 0) - 50) + infoFDistance) + 'px';
+  infoleft.style.top = ((verticalMargin + (((screenHeight - (2 * verticalMargin)) / 2) | 0)) - 10) + 'px';
+
+  inforight.style.left = (screenHalfWidth + ((((screenHalfWidth / 2) | 0) - 50) - infoFDistance)) + 'px';
+  inforight.style.top = ((verticalMargin + (((screenHeight - (2 * verticalMargin)) / 2) | 0)) - 10) + 'px';
+
+  complexityzonelinkleft.style.left = ((((screenHalfWidth / 2) | 0) - 100) + 14) + 'px';
+  complexityzonelinkleft.style.top = ((screenHeight /*- verticalMargin*/ ) - 30) + 'px';
+
+  complexityzonelinkright.style.left = (screenHalfWidth + ((((screenHalfWidth / 2) | 0) - 100) - 14)) + 'px';
+  complexityzonelinkright.style.top = ((screenHeight /*- verticalMargin*/ ) - 30) + 'px';
+
+
+  centerline.style.left = (screenHalfWidth - 1) + 'px';
+  centerline.style.top = verticalMargin + 'px';
+  centerline.style.height = (screenHeight - (2 * verticalMargin)) + 'px';
+
+  lefteyetopcorner.style.left = (screenHalfWidth - 100) + 'px';
+  lefteyetopcorner.style.top = verticalMargin + 'px';
+
+  righteyetopcorner.style.left = screenHalfWidth + 'px';
+  righteyetopcorner.style.top = verticalMargin + 'px';
+
+  lefteyebottomcorner.style.left = (screenHalfWidth - 100) + 'px';
+  lefteyebottomcorner.style.top = ((screenHeight - verticalMargin) - 100) + 'px';
+
+  righteyebottomcorner.style.left = screenHalfWidth + 'px';
+  righteyebottomcorner.style.top = ((screenHeight - verticalMargin) - 100) + 'px';
+
+}
+
+function toast(toastMessage) {
+  toastQueue.push(toastMessage);
+}
+
+function toastRun(deltaMS) {
+  if (toastCountDownMs > 0) {
+    if (deltaMS >= toastCountDownMs) {
+      toastCountDownMs = 0;
+      if (toastQueue.length == 0) {
+        toastleft.style.visibility = 'hidden';
+        toastright.style.visibility = 'hidden';
+      }
+    } else {
+      toastCountDownMs -= deltaMS;
+    }
+  } else if (toastQueue.length > 0) {
+    var toastMessage = toastQueue.splice(0, 1);
+    if (toastMessage || (toastMessage != '')) {
+      toastleft.innerHTML = toastMessage;
+      toastright.innerHTML = toastMessage;
+      toastleft.style.visibility = 'visible';
+      toastright.style.visibility = 'visible';
+      toastCountDownMs = 3000;
+    }
+  }
+}
+
+function infoShow(infoMessage) {
+  infoleft.style.left = ((((screenHalfWidth / 2) | 0) - 50) + infoFDistance) + 'px';
+  inforight.style.left = (screenHalfWidth + ((((screenHalfWidth / 2) | 0) - 50) - infoFDistance)) + 'px';
+  infoleft.innerHTML = infoMessage;
+  inforight.innerHTML = infoMessage;
+  infoleft.style.visibility = 'visible';
+  inforight.style.visibility = 'visible';
+}
+
+function infoHide() {
+  infoleft.style.visibility = 'hidden';
+  inforight.style.visibility = 'hidden';
+}
+
+var renderState = 0;
+var planetProjectVector = new THREE.Vector3();
+var screenCenterVector = new THREE.Vector2(0, 0);
+
+function render() {
+  requestAnimationFrame(render);
+
+  camera.updateProjectionMatrix();
+  controls.update(clock.getDelta());
+
+  effect.render(scene, camera);
+
+  var nowMs = Date.now();
+  var deltaMs = (nowMs - lastMs);
+  lastMs = nowMs;
+
+  toastRun(deltaMs);
+
+  var lTimeSec = clock.getElapsedTime();
+
+  
+  if (keyMesh != null) {
+    keyMesh.rotation.y += 0.01;
+  }
+
+  var lEarthSunPeriodSec = 20;
+
+  var lEarthOrbitNorm = (lTimeSec / lEarthSunPeriodSec);
+
+  renderState++;
+  if (renderState == 1) {
+    // only determine focus 50% of time
+    var focusPlanetPrev = focusPlanet;
+    var focusPlanetNew = null;
+    var useProjectMethod = true;
+    if (useProjectMethod) { // project method
+      for (var pi = 0; pi < focusableObjects.length; pi++) {
+        var planet = focusableObjects[pi];
+        planetProjectVector.copy(planet.position);
+        planetProjectVector.project(camera);
+        //planetProjectVector.x = ((planetProjectVector.x + 1) / 2) * screenHalfWidth;
+        //planetProjectVector.y = - ((planetProjectVector.y - 1) / 2) * (screenHeight - (2 * verticalMargin));
+        if (screenCenterVector.distanceTo(planetProjectVector) < 0.1) {
+          focusPlanetNew = planet;
+          break;
+        }
+      }
+    } else { // unproject method
+      var vector = new THREE.Vector3();
+      var focusX = 0.5; // center of screen
+      var focusY = 0.5; // center of screen
+      vector.set((focusX) * 2 - 1, -(focusY) * 2 + 1, 0.5);
+      vector.unproject(camera);
+      raycaster.ray.set(camera.position, vector.sub(camera.position).normalize());
+      var intersects = raycaster.intersectObjects(focusableObjects);
+      if (intersects.length > 0) {
+        // intersects[0].object == intersected mesh object
+        // intersects[0].point == position on object in scene coordinates
+        focusPlanetNew = intersects[0].object;
+      }
+    }
+    if (focusPlanetNew != null) {
+      focusPlanet = focusPlanetNew;
+      if (focusPlanet != focusPlanetPrev) {
+        // Some inverse relationship between (info box inter-eye distance) and ( distance from camera to position of planet minus radius)
+        // TODO: this sucks, bad approximation, mathematically incorrect, doesn't take care of screen resolution, etc.
+        infoFDistance = (1000 / (camera.position.distanceTo(focusPlanet.position) - focusPlanet.solarSystemData.radius)) | 0;
+        infoShow(focusPlanet.solarSystemData.name);
+      }
+    } else {
+      focusPlanet = null;
+      if (focusPlanet != focusPlanetPrev) {
+        infoHide();
+      }
+    }
+  } else if (renderState > 1) {
+    renderState = 0;
+  }
+  camCapture();
+
+  TWEEN.update();
+}
+
+function fullscreen(el) {
+  if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+    if (el.requestFullscreen) {
+      el.requestFullscreen();
+    } else if (el.msRequestFullscreen) {
+      el.msRequestFullscreen();
+    } else if (el.mozRequestFullScreen) {
+      el.mozRequestFullScreen();
+    } else if (el.webkitRequestFullscreen) {
+      el.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+    }
+  } else {
+    var toggle = false;
+    if (toggle) {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
+    }
+  }
+}
+
+var camCaptureState = 0;
+
+function camCapture() {
+  if (videoPlaying) {
+    cameraImageContext.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, 0, 0, cameraImage.width, cameraImage.height);
+    leftCamContext.drawImage(cameraImage, 0, 0, cameraImage.width, cameraImage.height, 0, 0, leftcam.width, leftcam.height);
+    rightCamContext.drawImage(cameraImage, 0, 0, cameraImage.width, cameraImage.height, 0, 0, leftcam.width, leftcam.height);
+  }
+}
+
+
+
+// If "guns don't kill people, people kill people", ...
+// TODO: Better method for conditional sequential toasting.
+
+if (isMobile) {
+  toast('Find my Keys demo');
+  toast('Get ready to spin');
+  toast('Accept camera permission for AR mode');
+} else {
+  toast(
+    'Find my Keys demo<br />\n' +
+    '<br />\n' +
+    'Open this page on your phone and place your phone in Google Cardboard.'
+  );
+  toast(
+    'To use on your PC:<br />\n' +
+    '<br />' +
+    '<b><u>Controls</u></b><br />\n' +
+    'mouse drag: look around<br />\n' +
+    //'mouse wheel: zoom<br />\n' +
+    'cursor keys: move<br />\n' +
+    'R/F keys: up/down<br />\n'
+  );
+}
+
+window.addEventListener("DOMContentLoaded", function () {
+  var getUserMedia = navigator.getUserMedia ? function (a, b, c) {
+    navigator.getUserMedia(a, b, c);
+  } : (navigator.webkitGetUserMedia ? function (a, b, c) {
+    navigator.webkitGetUserMedia(a, b, c);
+  } : null);
+  if (getUserMedia != null) {
+    MediaStreamTrack.getSources(function (sourceInfos) {
+      var videoSource = null;
+      // Select the rear camera. We are assuming it is the last one.
+      // TODO: assumption is the mother of all...
+      for (var i = 0; i < sourceInfos.length; i++) {
+        var sourceInfo = sourceInfos[i];
+        //console.log('source: ', sourceInfo);
+        if (sourceInfo.kind === 'video') {
+          //console.log(sourceInfo.id, sourceInfo.label || 'camera');
+          videoSource = sourceInfo.id;
+          //break; // uncomment for selecting the first one.
+        }
+      }
+
+      if (videoSource != null) {
+        getUserMedia.call(this, {
+            video: {
+              optional: [
+                {
+                  sourceId: videoSource
+                                    },
+                {
+                  minWidth: 640
+                                    },
+                {
+                  maxWidth: 640
+                                    },
+                {
+                  minHeight: 480
+                                    },
+                {
+                  maxHeight: 480
+                                    }
+            ]
+            },
+            //video: true, 
+            audio: false
+          },
+          function (stream) {
+            video.src = window.URL.createObjectURL(stream);
+            video.play();
+
+            videoPlaying = true;
+            toast('Video setup ok');
+            if (isMobile) {
+              if (!fullScreenRequested) {
+                toast('Tap screen for full screen mode');
+              }
+            }
+            toast('Please wait while textures load');
+            if (isMobile) {
+              toast('Tip: increase your phone\'s display sleep timeout');
+            }
+          },
+          function (error) {
+            videoPlaying = false;
+            toast("Video capture disabled");
+            if (isMobile) {
+              if (!fullScreenRequested) {
+                toast('Tap screen for full screen mode');
+              }
+            }
+            toast('Please wait while textures load');
+            if (isMobile) {
+              toast('Tip: increase your phone\'s display sleep timeout');
+            }
+          }
+        );
+      } else {
+        toast("Video capture not available");
+        if (isMobile) {
+          if (!fullScreenRequested) {
+            toast('Tap screen for full screen mode');
+          }
+        }
+        toast('Please wait while textures load');
+        if (isMobile) {
+          toast('Tip: increase your phone\'s display sleep timeout');
+        }
+      }
+    });
+  } else {
+    toast("HTML5 video not supported");
+    if (isMobile) {
+      toast('Tap screen for full screen mode');
+    }
+    toast('Please wait while textures load');
+    if (isMobile) {
+      toast('Tip: increase your phone\'s display sleep timeout');
+    }
+  }
+
+});
+</script>
+</body>
+
+</html>
