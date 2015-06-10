@@ -60,6 +60,8 @@ public class TCPWrapper extends Activity  {
 
     public void resetDataStore(View view) {
         shortThread.resetData();
+
+        updateConversationHandler.post(new updateUIThread("Reset Data"));
     }
 
 

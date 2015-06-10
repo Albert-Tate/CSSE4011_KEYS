@@ -56,7 +56,6 @@ public class TCPClient {
 
     public Location getMyLocationEstimate(final List<ScanResult> nodes)
     {
-
         thread = new Thread(new Runnable() {
             public void run ()
             {
