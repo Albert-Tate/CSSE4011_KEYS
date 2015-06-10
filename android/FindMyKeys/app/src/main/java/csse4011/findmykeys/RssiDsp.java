@@ -70,6 +70,7 @@ public class RssiDsp {
     }
 }
 */
+
 //Albert Tate, 9 June 2015
 
 public class RssiDsp {
@@ -80,6 +81,14 @@ public class RssiDsp {
         READ_COUNT = 0;
         for (int i = 0; i < 361; i++) {
             READINGS[i] = 0;
+        }
+    }
+
+    private static int getCircularDiff(int first, int second) {
+        if (first <= second) {
+            return second - first;
+        } else {
+            return 360 - first + second;
         }
     }
 
@@ -94,17 +103,22 @@ public class RssiDsp {
         int[][] B_DATA = new int[READ_COUNT][2]; //Angle, RSSI
         int[][] SMA = new int[READ_COUNT][2]; //Angle, RSSI
         int j = 0;
+        int lastAngle = 0;
         //Sort
         for (int i = 0; i < 361; i++) {
             if(READINGS[i] != 0) {
                 B_DATA[j][0] = i;
                 B_DATA[j][1] = READINGS[i];
+                if (getCircularDiff(lastAngle, i) > 100)
+                    return -181;
+                lastAngle = i;
                 j++;
             }
         }
         //Calculate SMA
         int SMA_WIDTH = 6; //User Var
         int SMA_VAL = 0;
+        if (READ_COUNT <= SMA_WIDTH) return -181;
         for(int i = SMA_WIDTH-1; i < READ_COUNT; i++) {//Maybe start at SMA_WIDTH?
             for(int k = 0; k < SMA_WIDTH; k++) {
                 SMA_VAL += B_DATA[i - k][1];
