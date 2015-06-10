@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
 import java.util.List;
 
 /**
@@ -39,7 +40,7 @@ public class TCPClient {
         thread = new Thread(new Runnable() {
             public void run ()
             {
-                loc = locThreadRun("request\n", true);
+                loc = locThreadRun("request_best\n", true);
             }
         });
         thread.start();
@@ -55,7 +56,6 @@ public class TCPClient {
 
     public Location getMyLocationEstimate(final List<ScanResult> nodes)
     {
-
         thread = new Thread(new Runnable() {
             public void run ()
             {
@@ -95,12 +95,25 @@ public class TCPClient {
         TCP_SERVER_PORT = port;
     }
     private Location locThreadRun(String sendString, Boolean getTime) {
-        Location curLoc = new Location("");
+        Location curLoc = null;
         try {
             if (socketChannel == null || !socketChannel.isOpen())
                 socketChannel = SocketChannel.open();
-            if (!socketChannel.isConnected())
+            if (!socketChannel.isConnected()) {
+                // we open this channel in non blocking mode
+                socketChannel.configureBlocking(false);
                 socketChannel.connect(new InetSocketAddress(TCP_SERVER_IP, TCP_SERVER_PORT));
+                int timeout = 0;
+                while (!socketChannel.finishConnect()) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    timeout++;
+                    if (timeout > 150) return null;
+                }
+            }
             ByteBuffer inBuff = ByteBuffer.allocate(1024);
             ByteBuffer outBuf = ByteBuffer.allocate(1024);
             outBuf.clear();
@@ -111,15 +124,27 @@ public class TCPClient {
                 while(outBuf.hasRemaining()) {
                     socketChannel.write(outBuf);
                 }
-                int readBytes = socketChannel.read(inBuff);
-                byte[] byteArray = new byte[readBytes];
-                inBuff.position(0);
-                inBuff.get(byteArray, 0, readBytes);
+                String message = "";
+                int count = 0, timeout = 0;
+                do {
+                    if ((count = socketChannel.read(inBuff)) > 0) {
+                        // flip the buffer to start reading
+                        inBuff.flip();
+                        message += Charset.defaultCharset().decode(inBuff);
+                        break;
+                    }
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    timeout++;
+                } while (count == 0 && timeout < 150);
 
                 socketChannel.close();
-                if (readBytes > 0)
+                if (!message.contentEquals(""))
                 {
-                    curLoc = new LocationParser(new String(byteArray), getTime).getloc();
+                    curLoc = new LocationParser(message, getTime).getloc();
                     curLoc.setProvider(sendString);
                 }
                 return curLoc;
@@ -135,7 +160,6 @@ public class TCPClient {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        curLoc.setProvider("returning Null");
         return curLoc;
     }
 
