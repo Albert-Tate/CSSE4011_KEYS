@@ -315,6 +315,7 @@ var AU = 26000; // 1 Astronomical Unit (Average distance between Sun and Earth) 
 var surfaceGraph = null;
 var sunMesh = null;
 var keyMesh = null;
+var arrowMesh = null;
 
 var focusableObjects = [];
 var focusPlanet = null;
@@ -329,11 +330,19 @@ var toastQueue = [];
 
 var setOrientationControlsDone = false;
 
+var keyDegree = 0;
+
 init();
 render();
 
-function hello() {
-  console.log("hello");
+
+function setData(data) {
+  var angle = parseInt(data,10);
+  if (!isNaN(angle) && Math.abs(angle) <= 360) {
+    keyDegree = angle;
+    keyDegree = 360 - keyDegree;
+    console.log("keyDegree: "+ keyDegree);
+  }
 }
 
 function init() {
@@ -390,7 +399,7 @@ function init() {
 
   // Place us somewhere between Mars and Jupiter, from above
   var orrerySunPosition = {
-    x: 20, // forward
+    x: 0, // forward
     y: -40, // up. 
     z: 80 // right
   };
@@ -456,15 +465,21 @@ function init() {
   var axes = new THREE.AxisHelper( 10 );
   scene.add( axes );
 
-  var dir = new THREE.Vector3( 1, 1, 0 );
-  var origin = new THREE.Vector3( 6, -1, 0 );
+  var dir = new THREE.Vector3( 1, 0, 2 );
+  var origin = new THREE.Vector3( 0, -50, 100 );
   var length = 1;
   var hex = 0xffff00;
 
-  var arrowHelper = new THREE.ArrowHelper( dir, origin, length, hex ,1.500, 1.500);
-  scene.add( arrowHelper );
+  // var arrowHelper = new THREE.ArrowHelper( dir, origin, length, hex ,30, 20);
+  // arrowHelper.setColor("#7DD4F9");
+  // scene.add( arrowHelper);
 
-  // scene.add(new THREE.GridHelper(10000,1000));
+  // arrowHelper.solarSystemData = {
+  //   name: 'Position',
+  //   radius: 0
+  // };  
+
+  // scene.add(new THREE.GridHelper(1000,10));
 
   var hideCam = false;
   if (hideCam) {
@@ -491,7 +506,7 @@ function init() {
 
   sunMesh.solarSystemData = {
     name: 'The Sun',
-    radius: sunRadius
+    radius: 0
   };
   // focusableObjects.push(sunMesh);
 
@@ -500,8 +515,7 @@ function init() {
   loader.load( "models/carkeys.json", function(geometry, materials) { 
     var keyMaterial = new THREE.MeshFaceMaterial(materials);
     keyMesh = new THREE.Mesh(geometry, keyMaterial);
-    console.log("in");
-    console.log(keyMesh);
+
   }); 
 
 
@@ -514,9 +528,33 @@ function init() {
     keyMesh.solarSystemData = {
     name: 'Keys',
     radius: sunRadius
-  };  
+  }  
 
-    focusableObjects.push(keyMesh);
+  focusableObjects.push(keyMesh);
+  };
+
+  // Load in the mesh and add it to the scene.
+  var loader1 = new THREE.JSONLoader();
+  loader1.load( "models/arrow.json", function(geometry) { 
+    var arrowMaterial = new THREE.MeshLambertMaterial({color: 0x0CA5FC});
+    arrowMesh = new THREE.Mesh(geometry, arrowMaterial);
+ 
+  }); 
+
+
+  loader1.onLoadComplete=function(){
+    arrowMesh.position.x = camera.position.x; // forward
+    arrowMesh.position.y = camera.position.y-50; // up
+    arrowMesh.position.z = camera.position.z+100; // right
+    scene.add(arrowMesh);
+
+    arrowMesh.solarSystemData = {
+    name: 'Position',
+    radius: 0
+  }  
+
+    
+    focusableObjects.push(arrowMesh);
   };
 
   window.addEventListener('resize', resize, false);
@@ -722,6 +760,25 @@ function render() {
   
   if (keyMesh != null) {
     keyMesh.rotation.y += 0.01;
+    keyMesh.position.x = Math.round(Math.sin(keyDegree * degtorad) * 80);
+    keyMesh.position.z = Math.round(Math.cos(keyDegree * degtorad) * 80);
+    // keyDegree++;
+  }
+  if (arrowMesh != null) {
+    var pLocal = new THREE.Vector3( 0, -50, 100 );
+    var pWorld = pLocal.applyMatrix4( camera.matrixWorld );
+    var dir = pWorld.sub( camera.position );
+    
+    arrowMesh.position.x = dir.x * -1;
+    arrowMesh.position.z = dir.z * -1; // right
+    arrowMesh.rotation.y = (keyDegree * degtorad);
+    
+    // var arrowAngle = 0.0;
+    // var arrowDir = arrowMesh.position.sub(keyMesh.position).normalize();
+    // if (dir.x != 0) {
+      // arrowAngle = Math.atan(dir.z / (dir.x * 1.0));
+    // } 
+    // console.log(arrowMesh.position);
   }
 
   var lEarthSunPeriodSec = 20;

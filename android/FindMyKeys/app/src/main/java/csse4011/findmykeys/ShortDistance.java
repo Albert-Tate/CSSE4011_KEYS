@@ -52,7 +52,7 @@ public class ShortDistance implements SensorEventListener {
     public interface DebugCallback {
         void printString(String str);
     }
-    float azimut;
+    private float azimut;
     float rssi;
 
 
@@ -61,6 +61,10 @@ public class ShortDistance implements SensorEventListener {
     private SensorManager mSensorManager;
     Sensor accelerometer;
     Sensor magnetometer;
+
+    public float getCompass() {
+        return this.azimut;
+    }
 
     protected void onResume(Context app) {
         mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
@@ -237,7 +241,7 @@ public class ShortDistance implements SensorEventListener {
                     rssi = info.level;
                     datastore.add((int) azimut, (int) rssi);
 //                    fileIO.writeToFile(String.format("%d, %d\n", (int) azimut, (int) rssi));
-                    callb.printString(String.format("%d, %d\n", (int) azimut, (int)rssi));
+                    callb.printString(String.format("%d", (int) azimut));
 
                 }
 

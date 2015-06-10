@@ -17,24 +17,58 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:id="@+id/myAngleHead"
+        android:text="My Position"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="#8023C8FC"
+        android:layout_marginTop="500px" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/myAngle"
+        android:text="0 N"
+        android:textSize="30sp"
+        android:textStyle="bold"
+        android:textColor="#8023C8FC"
+        android:layout_marginTop="550px" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/keyDegreeHead"
+        android:text="Key Degree"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="#8023C8FC"
+        android:layout_marginTop="800px" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:id="@+id/keyDegree"
-        android:text="test"
-        android:textSize="30dp"/>
+        android:text="-90 W"
+        android:textSize="30sp"
+        android:textStyle="bold"
+        android:textColor="#8023C8FC"
+        android:layout_marginTop="850px" />
 
 
     <FrameLayout
         android:id="@+id/information_container"
 
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="320px"
+        android:layout_height="610px"
         android:visibility="visible"
->
+        android:layout_gravity="bottom|right"
+        android:background="@drawable/map_border">
 
         <fragment
             android:id="@+id/map"
 
-            android:layout_width="300px"
-            android:layout_height="300px"
+            android:layout_width="310px"
+            android:layout_height="600px"
 
             android:name="com.google.android.gms.maps.MapFragment"
 
@@ -44,42 +78,14 @@
             map:uiTiltGestures="false"
             map:uiZoomControls="false"
             map:uiZoomGestures="false"
-            android:layout_gravity="bottom|right"
-            android:layout_marginBottom="100px"
-            android:layout_marginRight="100px" />
+            android:layout_marginBottom="0px"
+            android:layout_marginRight="0px"
+            android:layout_gravity="center" />
 
 
 
     </FrameLayout>
 
-    <FrameLayout
-        android:id="@+id/information_container1"
 
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="visible"
-        >
-
-        <fragment
-            android:id="@+id/map1"
-
-            android:layout_width="300px"
-            android:layout_height="300px"
-
-            android:name="com.google.android.gms.maps.MapFragment"
-
-            tools:ignore="MissingPrefix"
-            map:uiRotateGestures="false"
-            map:uiScrollGestures="false"
-            map:uiTiltGestures="false"
-            map:uiZoomControls="false"
-            map:uiZoomGestures="false"
-            android:layout_gravity="bottom|center_horizontal"
-            android:layout_marginBottom="100px"
-            android:layout_marginRight="100px" />
-
-
-
-    </FrameLayout>
 
 </FrameLayout>

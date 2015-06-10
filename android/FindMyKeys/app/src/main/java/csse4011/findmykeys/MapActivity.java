@@ -135,35 +135,30 @@ public class MapActivity extends Activity implements
                 // Called when a new location is found by the network location provider.
                 myLocation = location;
 
-                Location loc = client.getKeyLocationEstimate();
+                lockey = client.getKeyLocationEstimate();
+                locPhone = client.getMyLocationEstimate(wifiManager.getScanResults());
 
-//                Location loc = client.getMyLocationEstimate(wifiManager.getScanResults());
-                if(loc != null) {
-
-                }
 
                 if (mMap != null) {
                     mMap.clear();
+
                     if (myLocation != null) {
                         mMap.addMarker(new MarkerOptions().position(new LatLng(myLocation.getLatitude(), myLocation.getLongitude())).title("phone").snippet("Phone GPS"));
                         // Instantiates a new CircleOptions object and defines the center and radius
-                        CircleOptions circleOptions1 = new CircleOptions()
-                                .center(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()))
-                                .radius(50)
-                                .strokeColor(Color.argb(180, 84, 160, 168))
-                                .fillColor(Color.argb(180, 84, 160, 168)); // In meters
+//                        CircleOptions circleOptions1 = new CircleOptions()
+//                                .center(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()))
+//                                .radius(50)
+//                                .strokeColor(Color.argb(180, 84, 160, 168))
+//                                .fillColor(Color.argb(180, 84, 160, 168)); // In meters
 
 
-                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()), 12));
+//                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()), 12));
 
-
-// Get back the mutable Circle
-                        Circle circle1 = mMap.addCircle(circleOptions1);
+//                        mMap.addCircle(circleOptions1);
                     }
 
-//                    locPhone = client.getMyLocationEstimate(wifi.getScanResults());
                     if (locPhone != null) {
-                        mMap.addMarker(new MarkerOptions().position(new LatLng(locPhone.getLatitude(), locPhone.getLongitude())).title("phone").snippet("Phone Wifi"));
+                        mMap.addMarker(new MarkerOptions().position(new LatLng(locPhone.getLatitude(), locPhone.getLongitude())).title("Phone").snippet("Phone Wifi"));
                         // Instantiates a new CircleOptions object and defines the center and radius
                         CircleOptions circleOptions2 = new CircleOptions()
                                 .center(new LatLng(locPhone.getLatitude(), locPhone.getLongitude()))
@@ -172,7 +167,6 @@ public class MapActivity extends Activity implements
                                 .fillColor(Color.argb(180, 84, 160, 168)); // In meters
 
 
-                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(locPhone.getLatitude(), locPhone.getLongitude()), 12));
 
 //                        double angle = angleFromCoordinate(locPhone.getLatitude(), locPhone.getLongitude(),UQ.latitude, UQ.longitude );
 //                        mMap.addMarker(new MarkerOptions()
@@ -181,13 +175,13 @@ public class MapActivity extends Activity implements
 //                                .flat(true)
 //                                .rotation((float)angle - 90));
 
-// Get back the mutable Circle
-                        Circle circle1 = mMap.addCircle(circleOptions2);
+
+                        mMap.addCircle(circleOptions2);
                     }
-//                    lockey = client.getKeyLocationEstimate();
+
                     if (lockey != null) {
                         Log.v("keyPos", "found key");
-                        mMap.addMarker(new MarkerOptions().position(new LatLng(lockey.getLatitude(), lockey.getLongitude())).title("phone").snippet("Keys"));
+                        mMap.addMarker(new MarkerOptions().position(new LatLng(lockey.getLatitude(), lockey.getLongitude())).title("Keys").snippet("Keys"));
                         // Instantiates a new CircleOptions object and defines the center and radius
                         CircleOptions circleOptions3 = new CircleOptions()
                                 .center(new LatLng(lockey.getLatitude(), lockey.getLongitude()))
@@ -195,32 +189,34 @@ public class MapActivity extends Activity implements
                                 .strokeColor(Color.argb(180, 84, 160, 168))
                                 .fillColor(Color.argb(180, 84, 160, 168)); // In meters
 
-                        double angle = angleFromCoordinate(myLocation.getLatitude(), myLocation.getLongitude(), lockey.getLatitude(), lockey.getLongitude());
-                        mMap.addMarker(new MarkerOptions()
-                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.arrow))
-                                .position(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()))
-                                .flat(true)
-                                .rotation((float) angle - 90));
+                        if (locPhone != null) {
+                            double angle = angleFromCoordinate(locPhone.getLatitude(), locPhone.getLongitude(), lockey.getLatitude(), lockey.getLongitude());
+                            mMap.addMarker(new MarkerOptions()
+                                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.arrow))
+                                    .position(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()))
+                                    .flat(true)
+                                    .rotation((float) angle - 90));
+                        }
 
+                        mMap.addCircle(circleOptions3);
 
-// Get back the mutable Circle
-                        Circle circle1 = mMap.addCircle(circleOptions3);
-                    } else {
-                        double angle = angleFromCoordinate(myLocation.getLatitude(), myLocation.getLongitude(), UQ.latitude, UQ.longitude);
-                        mMap.addMarker(new MarkerOptions()
-                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.arrow))
-                                .position(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()))
-                                .flat(true)
-                                .rotation((float) angle - 90));
-                        mMap.addMarker(new MarkerOptions().position(UQ).title("Keys").snippet("Location of keys"));
-//        // Instantiates a new CircleOptions object and defines the center and radius
-                        CircleOptions circleOptions = new CircleOptions()
-                                .center(UQ)
-                                .radius(800)
-                                .strokeColor(Color.argb(180, 80, 130, 168))
-                                .fillColor(Color.argb(180, 80, 130, 168)); // In meters
-                        Circle circle1 = mMap.addCircle(circleOptions);
                     }
+//                    else {
+//                        double angle = angleFromCoordinate(myLocation.getLatitude(), myLocation.getLongitude(), UQ.latitude, UQ.longitude);
+//                        mMap.addMarker(new MarkerOptions()
+//                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.arrow))
+//                                .position(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()))
+//                                .flat(true)
+//                                .rotation((float) angle - 90));
+//                        mMap.addMarker(new MarkerOptions().position(UQ).title("Keys").snippet("Location of keys"));
+////        // Instantiates a new CircleOptions object and defines the center and radius
+//                        CircleOptions circleOptions = new CircleOptions()
+//                                .center(UQ)
+//                                .radius(800)
+//                                .strokeColor(Color.argb(180, 80, 130, 168))
+//                                .fillColor(Color.argb(180, 80, 130, 168)); // In meters
+//                        Circle circle1 = mMap.addCircle(circleOptions);
+//                    }
                 }
             }
 
@@ -343,26 +339,40 @@ public class MapActivity extends Activity implements
     }
 
     public void showStar(View view) {
-        toggleStarView();
+        toggleStarView(view);
     }
 
-    private void toggleStarView() {
-        final AnimatedPathView starContainer = (AnimatedPathView) findViewById(R.id.star_container);
+    private void toggleStarView(View view) {
+        final View infoContainer = findViewById(R.id.information_container);
 
-        if (starContainer.getVisibility() == View.INVISIBLE) {
-            findViewById(R.id.photo).animate().alpha(0.2f);
-            starContainer.setAlpha(1.0f);
-            starContainer.setVisibility(View.VISIBLE);
-            starContainer.reveal();
+        int cx = (view.getLeft() + view.getRight()) / 2;
+        int cy = (view.getTop() + view.getBottom()) / 2;
+        float radius = Math.max(infoContainer.getWidth(), infoContainer.getHeight()) * 2.0f;
+
+        Animator reveal;
+        if (infoContainer.getVisibility() == View.INVISIBLE) {
+            infoContainer.setVisibility(View.VISIBLE);
+            reveal = ViewAnimationUtils.createCircularReveal(
+                    infoContainer, cx, cy, 0, radius);
+            reveal.setInterpolator(new AccelerateInterpolator(2.0f));
+            if (lockey != null) {
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lockey.getLatitude(), lockey.getLongitude()), 12));
+            } else if (myLocation != null) {
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()), 12));
+            }
         } else {
-            findViewById(R.id.photo).animate().alpha(1.0f);
-            starContainer.animate().alpha(0.0f).withEndAction(new Runnable() {
+            reveal = ViewAnimationUtils.createCircularReveal(
+                    infoContainer, cx, cy, radius, 0);
+            reveal.addListener(new AnimatorListenerAdapter() {
                 @Override
-                public void run() {
-                    starContainer.setVisibility(View.INVISIBLE);
+                public void onAnimationEnd(Animator animation) {
+                    infoContainer.setVisibility(View.INVISIBLE);
                 }
             });
+            reveal.setInterpolator(new DecelerateInterpolator(2.0f));
         }
+        reveal.setDuration(600);
+        reveal.start();
     }
 
     public void showInformation(View view) {
@@ -382,6 +392,11 @@ public class MapActivity extends Activity implements
             reveal = ViewAnimationUtils.createCircularReveal(
                     infoContainer, cx, cy, 0, radius);
             reveal.setInterpolator(new AccelerateInterpolator(2.0f));
+            if (locPhone != null) {
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(locPhone.getLatitude(), locPhone.getLongitude()), 12));
+            } else if (myLocation != null) {
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()), 12));
+            }
         } else {
             reveal = ViewAnimationUtils.createCircularReveal(
                     infoContainer, cx, cy, radius, 0);

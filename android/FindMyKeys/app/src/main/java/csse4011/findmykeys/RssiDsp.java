@@ -109,7 +109,7 @@ public class RssiDsp {
             if(READINGS[i] != 0) {
                 B_DATA[j][0] = i;
                 B_DATA[j][1] = READINGS[i];
-                if (getCircularDiff(lastAngle, i) > 100)
+                if (getCircularDiff(lastAngle, i) > 60)
                     return -181;
                 lastAngle = i;
                 j++;
@@ -138,8 +138,13 @@ public class RssiDsp {
             }
         }
 
-        return cur_ang - 180 + 90; //Offset from data rep + antenna directivity offset
+        return addAngle(cur_ang - 180, 0); //Offset from data rep + antenna directivity offset
 
     }
-
+    static int addAngle(int angle, int angle2) {
+        int retval = angle + angle2;
+        if (retval > 180) return retval - 360;
+        else if (retval < 0) return retval + 360;
+        return retval;
+    }
 }
