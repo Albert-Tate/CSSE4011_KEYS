@@ -2,6 +2,7 @@ package com.mikaljrue.tcptesting;
 
 import android.location.Location;
 import android.net.wifi.ScanResult;
+import android.util.Log;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -24,6 +25,10 @@ public class TCPClient {
     {
 
     }
+    TCPClient(String IP_ADDR)
+    {
+        TCP_SERVER_IP = IP_ADDR;
+    }
     private void initThread()
     {
 
@@ -34,7 +39,7 @@ public class TCPClient {
         thread = new Thread(new Runnable() {
             public void run ()
             {
-                loc = threadrun("request\n", true);
+                loc = locThreadRun("request\n", true);
             }
         });
         thread.start();
@@ -46,6 +51,8 @@ public class TCPClient {
         }
         return null;
     }
+
+
     public Location getMyLocationEstimate(final List<ScanResult> nodes)
     {
 
@@ -67,7 +74,7 @@ public class TCPClient {
                             rssiList.append(',');
                         }
                     }
-                    loc = threadrun("location_p " + macList + ' ' + channelList + ' ' + rssiList + '\n', false);
+                    loc = locThreadRun("location_p " + macList + ' ' + channelList + ' ' + rssiList + '\n', false);
                 } else
                     loc = null;
             }
@@ -87,7 +94,7 @@ public class TCPClient {
         TCP_SERVER_IP = ip;
         TCP_SERVER_PORT = port;
     }
-    private Location threadrun(String sendString, Boolean getTime) {
+    private Location locThreadRun(String sendString, Boolean getTime) {
         Location curLoc = new Location("");
         try {
             if (socketChannel == null || !socketChannel.isOpen())
@@ -104,11 +111,15 @@ public class TCPClient {
                 while(outBuf.hasRemaining()) {
                     socketChannel.write(outBuf);
                 }
-                int readbytes = socketChannel.read(inBuff);
+                int readBytes = socketChannel.read(inBuff);
+                byte[] byteArray = new byte[readBytes];
+                inBuff.position(0);
+                inBuff.get(byteArray, 0, readBytes);
+
                 socketChannel.close();
-                if (readbytes > 0)
+                if (readBytes > 0)
                 {
-                    curLoc = new LocationParser(new String(inBuff.array()), getTime).getloc();
+                    curLoc = new LocationParser(new String(byteArray), getTime).getloc();
                     curLoc.setProvider(sendString);
                 }
                 return curLoc;
@@ -127,6 +138,8 @@ public class TCPClient {
         curLoc.setProvider("returning Null");
         return curLoc;
     }
+
+
 
 
 

@@ -2,6 +2,7 @@ import socket
 import sys
 import time
 from Finder import get_location
+from IPLocator import Locate_IP 
 
 HOST = ''
 PORT = 4011
@@ -12,7 +13,7 @@ RSSI_EX = "-87,-60"
 LAST_KEY_CHECK_IN = [0, 0, 0, 0] #lat, lon, confidence, timestamp
 f = open("KeyLOC", 'a')
 
-def location_request(data):
+def location_request(data, IP):
 	data.rstrip()
 	split = data.split(" ")
 	
@@ -36,6 +37,9 @@ def location_request(data):
 		RSSI_LIST[i] = int(RSSI[i])
 
 	rx = get_location(MAC_ADDR, CHANNEL_LIST, RSSI_LIST)
+	if (rx[2] > 10000):
+		rx = Location_IP(IP)
+		rx = [rx[0], rx[1], 10000]
 	print MAC_ADDR, CHANNEL_LIST, RSSI_LIST
 	return rx
 
@@ -67,10 +71,10 @@ while 1:
 				if ("location_k" in data):
 					okay = 1
 					try:
-						rx = location_request(data)
+						rx = location_request(data, addr[0])
 						LAST_KEY_CHECK_IN = [rx[0], rx[1], rx[2], time.time()]
 						f.write(str(LAST_KEY_CHECK_IN) + "\n")
-						print LAST_KEY_CHECK_IN
+						print "Key at: ", LAST_KEY_CHECK_IN
 					except Exception() as msg:
 						conn.send("Bad Format " + msg)
 						okay = 0
@@ -82,7 +86,8 @@ while 1:
 				elif ("location_p" in data):
 					okay = 1
 					try:
-						rx = location_request(data)
+						rx = location_request(data, addr[0])
+						print "Phone at: ", rx[0], rx[1], rx[2]
 					except Exception() as msg:
 						conn.send("Bad Format " + msg)
 						okay = 0
