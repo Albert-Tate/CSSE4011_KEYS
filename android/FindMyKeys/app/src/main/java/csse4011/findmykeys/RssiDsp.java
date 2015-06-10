@@ -83,9 +83,11 @@ public class RssiDsp {
         }
     }
 
-    public void add(int RSSI, int Azimuth) {
+    public void add(int Azimuth, int RSSI) {
+        if(READINGS[Azimuth + 180] == 0) {
+            READ_COUNT++;
+        }
         READINGS[Azimuth+180] = RSSI;
-        READ_COUNT++;
     }
 
     public int process() {
@@ -103,7 +105,7 @@ public class RssiDsp {
         //Calculate SMA
         int SMA_WIDTH = 6; //User Var
         int SMA_VAL = 0;
-        for(int i = SMA_WIDTH; i < READ_COUNT; i++) {//Maybe start at SMA_WIDTH?
+        for(int i = SMA_WIDTH-1; i < READ_COUNT; i++) {//Maybe start at SMA_WIDTH?
             for(int k = 0; k < SMA_WIDTH; k++) {
                 SMA_VAL += B_DATA[i - k][1];
             }
@@ -116,7 +118,7 @@ public class RssiDsp {
         int cur_max = -200;
         int cur_ang = 0;
         for(int i = 0; i < READ_COUNT; i++) {
-            if(SMA[i][1] > cur_max) {
+            if( (SMA[i][1] > cur_max) && (SMA[i][1] != 0)) {
                 cur_max = SMA[i][1];
                 cur_ang = SMA[i][0];
             }
