@@ -97,7 +97,10 @@ public class ShortDistance implements SensorEventListener {
             if (success) {
                 float orientation[] = new float[3];
                 SensorManager.getOrientation(R, orientation);
+
                 azimut = 180-compassHeading(orientation[0], orientation[1], orientation[2]);
+//                Log.d("azimut", (orientation[0] / Math.PI ) * 180 + "");
+//                Log.d("azimut1", azimut + "");
             }
         }
     }

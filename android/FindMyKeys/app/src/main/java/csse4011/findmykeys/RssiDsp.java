@@ -138,13 +138,13 @@ public class RssiDsp {
             }
         }
 
-        return addAngle(cur_ang - 180, 0); //Offset from data rep + antenna directivity offset
+        return addAngle(cur_ang - 180, 180); //Offset from data rep + antenna directivity offset
 
     }
     static int addAngle(int angle, int angle2) {
         int retval = angle + angle2;
         if (retval > 180) return retval - 360;
-        else if (retval < 0) return retval + 360;
+        else if (retval < -180) return retval + 360;
         return retval;
     }
 }

@@ -51,7 +51,7 @@
 
                     android:layout_margin="14dp"
                     android:textSize="24sp"
-                    android:text="Hello World"
+                    android:text="Locate phone and keys using wifi"
                     android:fontFamily="sans-serif-light"
                     android:layout_below="@+id/title"/>
             </RelativeLayout>

@@ -19,23 +19,17 @@ package csse4011.findmykeys;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityOptions;
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Outline;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.graphics.Palette;
-import android.transition.Explode;
 import android.transition.Transition;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -43,25 +37,10 @@ import android.view.Menu;
 import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.ViewOutlineProvider;
-import android.view.Window;
 import android.view.WindowInsets;
 import android.view.animation.AccelerateInterpolator;
-import android.view.animation.DecelerateInterpolator;
-import android.webkit.JavascriptInterface;
-import android.webkit.PermissionRequest;
-import android.webkit.WebChromeClient;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 
 import csse4011.findmykeys.ui.AnimatedPathView;
 import csse4011.findmykeys.ui.TransitionAdapter;
@@ -76,7 +55,7 @@ public class ArActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        Log.d("ArActivity", "created");
 //        getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
 //        getWindow().setExitTransition(new Explode());
 
@@ -134,7 +113,7 @@ public class ArActivity extends Activity {
         titleView.setText(getIntent().getStringExtra("title"));
 
         TextView descriptionView = (TextView) findViewById(R.id.description);
-        descriptionView.setText(getIntent().getStringExtra("description"));
+        descriptionView.setText("Short distance localisation using augmented and virtual reality.");
     }
 
 
@@ -214,7 +193,8 @@ public class ArActivity extends Activity {
     }
 
     public void showStar(View view) {
-        toggleStarView();
+
+//        toggleStarView();
     }
 
     private void toggleStarView() {
@@ -245,7 +225,6 @@ public class ArActivity extends Activity {
 
     private void toggleInformationView(View view) {
         final View infoContainer = findViewById(R.id.information_container);
-        final View infoContainer1 = findViewById(R.id.information_container1);
 
         int cx = (view.getLeft() + view.getRight()) / 2;
         int cy = (view.getTop() + view.getBottom()) / 2;
@@ -254,7 +233,6 @@ public class ArActivity extends Activity {
         Animator reveal;
         if (infoContainer.getVisibility() == View.INVISIBLE) {
             infoContainer.setVisibility(View.VISIBLE);
-            infoContainer1.setVisibility(View.VISIBLE);
 
             reveal = ViewAnimationUtils.createCircularReveal(
                     infoContainer, cx, cy, 0, radius);

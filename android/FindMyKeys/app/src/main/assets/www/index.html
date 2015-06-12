@@ -99,9 +99,9 @@
       text-align: left;
       /* font-family: "Arial", "Sans-serif"; */
       
-      font-family: "Courier New", Courier, monospace;
+      font-family: "Arial", Courier, monospace;
       font-weight: bold;
-      font-size: 12px;
+      font-size: 18px;
     }
     
     #infoleft,
@@ -116,10 +116,9 @@
       filter: alpha(opacity=30);
       color: #00dddd;
       text-align: center;
-      // font-family:  "Courier New", Courier, monospace;
       font-family: "Arial", "Sans-serif";
       font-weight: bold;
-      font-size: 12px;
+      font-size: 18px;
       whiteSpace: nowrap;
     }
     
@@ -343,6 +342,7 @@ function setData(data) {
     keyDegree = 360 - keyDegree;
     console.log("keyDegree: "+ keyDegree);
   }
+  toast('Key position updated');
 }
 
 function init() {
@@ -439,12 +439,13 @@ function init() {
   if (window.DeviceOrientationEvent) {
     window.addEventListener('deviceorientation', setOrientationControls, true);
   }
-
+  var compDegree;
   window.addEventListener('deviceorientation', function(event) {
     var alpha = event.alpha;
     var beta = event.beta;
     var gamma = event.gamma;
-    var compDegree = compassHeading(alpha, beta, gamma);
+    compDegree = compassHeading(alpha, beta, gamma);
+
     // console.log("Dir "+ compDegree);
     // Do something
   }, false);
@@ -772,7 +773,11 @@ function render() {
     arrowMesh.position.x = dir.x * -1;
     arrowMesh.position.z = dir.z * -1; // right
     arrowMesh.rotation.y = (keyDegree * degtorad);
-    
+
+
+    // keyDegree++;
+    // keyDegree = 270;
+    // console.log(keyDegree);
     // var arrowAngle = 0.0;
     // var arrowDir = arrowMesh.position.sub(keyMesh.position).normalize();
     // if (dir.x != 0) {
@@ -882,15 +887,11 @@ function camCapture() {
 // TODO: Better method for conditional sequential toasting.
 
 if (isMobile) {
-  toast('Find my Keys demo');
-  toast('Get ready to spin');
-  toast('Accept camera permission for AR mode');
+  toast('Welcome to the Find My Keys Virtual Experience');
+  toast('Welcome to the Find My Keys Virtual Experience');
 } else {
   toast(
-    'Find my Keys demo<br />\n' +
-    '<br />\n' +
-    'Open this page on your phone and place your phone in Google Cardboard.'
-  );
+    'Please place phone in a virtual reality headset');
   toast(
     'To use on your PC:<br />\n' +
     '<br />' +
@@ -954,13 +955,14 @@ window.addEventListener("DOMContentLoaded", function () {
             videoPlaying = true;
             toast('Video setup ok');
             if (isMobile) {
-              if (!fullScreenRequested) {
-                toast('Tap screen for full screen mode');
-              }
+              // if (!fullScreenRequested) {
+                // toast('Tap screen for full screen mode');
+              // }
             }
             toast('Please wait while textures load');
             if (isMobile) {
-              toast('Tip: increase your phone\'s display sleep timeout');
+              toast('To calibrate position please spin on a spot slowly');
+              toast('To calibrate position please spin on a spot slowly');
             }
           },
           function (error) {

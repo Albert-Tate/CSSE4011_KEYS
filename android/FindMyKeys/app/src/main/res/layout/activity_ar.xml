@@ -95,7 +95,7 @@ android:layout_height="fill_parent">
         android:stateListAnimator="@anim/button_raise"
 
         android:onClick="showStar"
-
+        android:visibility="invisible"
         android:contentDescription="@string/star_button_description" />
 
     <FrameLayout

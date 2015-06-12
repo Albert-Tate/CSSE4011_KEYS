@@ -57,6 +57,9 @@ public class WebViewActivity extends Activity {
     Thread keyDegreeThread;
     private Handler mHandler;
 
+    private boolean offsetisSet = false;
+    private int offset = 0;
+    private int calibration = 0;
 
 
 
@@ -84,7 +87,7 @@ public class WebViewActivity extends Activity {
         shortThread = new ShortDistance(this, wifiManager, mSensorManager, new ShortDistance.DebugCallback() {
             @Override
             public void printString(String str) {
-                mHandler.post(new updateUIThread1(str));
+//                mHandler.post(new updateUIThread1(str));
             }
         });
         keyDegreeThread = new Thread(new Runnable() {
@@ -98,6 +101,7 @@ public class WebViewActivity extends Activity {
                     }
                     int degree = shortThread.processData();
                     if (Math.abs(degree) > 181) {
+                        Log.d("keyDegree", "wrap wrong "+ degree);
                         return;
                     }
                     if (degree != -181) {
@@ -112,9 +116,15 @@ public class WebViewActivity extends Activity {
                         Log.d("keyDegree", "processing");
 
                     }
+//                    if (!offsetisSet) {
+//                        offset = Math.round(shortThread.getCompass());
+//                        Log.d("offset", offset + "");
+//                        offsetisSet = true;
+//                    }
                 }
             }
         });
+
         keyDegreeThread.start();
 
     }
@@ -128,11 +138,15 @@ public class WebViewActivity extends Activity {
 
         @Override
         public void run() {
-            if(msg == -181) {
+            if(msg == -181 && keyDegreeText.getText().equals("busy")) {
                 keyDegreeText.setText("busy");
-            } else {
-                keyDegreeText.setText(msg + " " + getDirFromAngle(msg));
-                myWebView.loadUrl("javascript:setData(\"" + msg + "\");");
+            } else if (msg != -181){
+                int tmpAngle = msg - offset;
+                if (tmpAngle < 0) {
+                    tmpAngle += 360;
+                }
+                keyDegreeText.setText(msg + 60 + " " + getDirFromAngle(msg+60));
+                myWebView.loadUrl("javascript:setData(\"" + tmpAngle + "\");");
             }
 
 
@@ -176,6 +190,7 @@ public class WebViewActivity extends Activity {
             if (myAngle < 0) {
                 myAngle = myAngle + 360;
             }
+            Log.d("myAngle","myAngle " + myAngle);
             myAngleText.setText(myAngle + " " + getDirFromAngle(myAngle));
         }
     }
@@ -186,6 +201,7 @@ public class WebViewActivity extends Activity {
         mMap.setMyLocationEnabled(true);
         mMap.getUiSettings().setMyLocationButtonEnabled(false);
         mMap.getUiSettings().setCompassEnabled(true);
+        mMap.getUiSettings().setMapToolbarEnabled(false);
 
 //        float zoom = getIntent().getFloatExtra("zoom", 18.0f);
 
@@ -223,6 +239,22 @@ public class WebViewActivity extends Activity {
                         if(compassBearing < 0) {
                             compassBearing = compassBearing + 360;
                         }
+                        Log.d("myAngle", "myAngle " + compassBearing);
+                        int tmpAngle = Math.round(compassBearing) - offset;
+                        if (tmpAngle < 0) {
+                            tmpAngle += 360;
+                        }
+
+                        myAngleText.setText(compassBearing + " " + getDirFromAngle(Math.round(compassBearing)));
+                        if (calibration < 3) {
+                            offset = Math.round(shortThread.getCompass());
+                            myWebView.loadUrl("javascript:setData(\"" + tmpAngle + "\");");
+                            myAngleText.setText("Calibrating offset- " + offset);
+                            calibration += 1;
+                            shortThread.resetData();
+                        }
+
+
 
 //                        mMap.addMarker(new MarkerOptions()
 //                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.arrow))
@@ -285,7 +317,7 @@ public class WebViewActivity extends Activity {
                         // Make sure the request is coming from our file
                         // Warning: This check may fail for local files
 //                        if (request.getOrigin().toString().equals(AR_URL1)) {
-                        Log.d("requestl","kl"+ request.getOrigin().toString());
+                        Log.d("requestl", "kl" + request.getOrigin().toString());
                         request.grant(request.getResources());
 //                        } else {
 //                            request.deny();
@@ -295,6 +327,8 @@ public class WebViewActivity extends Activity {
             }
         });
         myWebView.loadUrl(AR_URL1);
+//        offset = Math.round(shortThread.getCompass());
+
     }
 
 //    @Override

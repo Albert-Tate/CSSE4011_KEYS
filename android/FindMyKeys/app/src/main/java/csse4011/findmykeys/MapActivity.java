@@ -82,6 +82,7 @@ public class MapActivity extends Activity implements
     // TCP stuff
     TCPClient client = null;
     WifiManager wifiManager;
+    Thread locationThread;
 
 
     @Override
@@ -114,7 +115,7 @@ public class MapActivity extends Activity implements
                 getWindow().getEnterTransition().removeListener(this);
             }
         });
-
+        setupLocationThread();
         createLocationListener();
     }
 
@@ -123,6 +124,24 @@ public class MapActivity extends Activity implements
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         client = new TCPClient();
 
+    }
+
+    private void setupLocationThread() {
+        locationThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        Thread.sleep(20000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    lockey = client.getKeyLocationEstimate();
+                    locPhone = client.getMyLocationEstimate(wifiManager.getScanResults());
+                }
+            }
+        });
+        locationThread.start();
     }
 
     private void createLocationListener() {
@@ -135,36 +154,48 @@ public class MapActivity extends Activity implements
                 // Called when a new location is found by the network location provider.
                 myLocation = location;
 
-                lockey = client.getKeyLocationEstimate();
-                locPhone = client.getMyLocationEstimate(wifiManager.getScanResults());
+
 
 
                 if (mMap != null) {
                     mMap.clear();
 
                     if (myLocation != null) {
-                        mMap.addMarker(new MarkerOptions().position(new LatLng(myLocation.getLatitude(), myLocation.getLongitude())).title("phone").snippet("Phone GPS"));
+//                        mMap.addMarker(new MarkerOptions().position(new LatLng(myLocation.getLatitude(), myLocation.getLongitude())).title("phone").snippet("Phone GPS"));
                         // Instantiates a new CircleOptions object and defines the center and radius
-//                        CircleOptions circleOptions1 = new CircleOptions()
-//                                .center(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()))
-//                                .radius(50)
-//                                .strokeColor(Color.argb(180, 84, 160, 168))
-//                                .fillColor(Color.argb(180, 84, 160, 168)); // In meters
+
+                        MarkerOptions marker = new MarkerOptions().position(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()));
+                        marker.title("Phone GPS");
+                        marker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN));
+                        mMap.addMarker(marker);
 
 
-//                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()), 12));
+                        CircleOptions circleOptions1 = new CircleOptions()
+                                .center(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()))
+                                .radius(myLocation.getAccuracy())
+                                .strokeColor(Color.argb(100, 84, 160, 168))
+                                .fillColor(Color.argb(100, 84, 160, 168)); // In meters
 
-//                        mMap.addCircle(circleOptions1);
+                        if (locPhone == null) {
+                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()), 13));
+                        }
+                        mMap.addCircle(circleOptions1);
                     }
 
                     if (locPhone != null) {
-                        mMap.addMarker(new MarkerOptions().position(new LatLng(locPhone.getLatitude(), locPhone.getLongitude())).title("Phone").snippet("Phone Wifi"));
+//                        mMap.addMarker(new MarkerOptions().position(new LatLng(locPhone.getLatitude(), locPhone.getLongitude())).title("Phone").snippet("Phone Wifi"));
+
+                        MarkerOptions marker1 = new MarkerOptions().position(new LatLng(locPhone.getLatitude(), locPhone.getLongitude()));
+                        marker1.title("Phone WIFI");
+                        marker1.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ROSE));
+                        mMap.addMarker(marker1);
+
                         // Instantiates a new CircleOptions object and defines the center and radius
                         CircleOptions circleOptions2 = new CircleOptions()
                                 .center(new LatLng(locPhone.getLatitude(), locPhone.getLongitude()))
-                                .radius(100)
-                                .strokeColor(Color.argb(180, 84, 160, 168))
-                                .fillColor(Color.argb(180, 84, 160, 168)); // In meters
+                                .radius(locPhone.getAccuracy())
+                                .strokeColor(Color.argb(80, 241, 166, 197))
+                                .fillColor(Color.argb(80, 241, 166, 197)); // In meters
 
 
 
@@ -181,19 +212,25 @@ public class MapActivity extends Activity implements
 
                     if (lockey != null) {
                         Log.v("keyPos", "found key");
-                        mMap.addMarker(new MarkerOptions().position(new LatLng(lockey.getLatitude(), lockey.getLongitude())).title("Keys").snippet("Keys"));
+//                        mMap.addMarker(new MarkerOptions().position(new LatLng(lockey.getLatitude(), lockey.getLongitude())).title("Keys").snippet("Keys"));
+
+                        MarkerOptions marker2 = new MarkerOptions().position(new LatLng(lockey.getLatitude(), lockey.getLongitude()));
+                        marker2.title("Keys");
+                        marker2.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+                        mMap.addMarker(marker2);
+
                         // Instantiates a new CircleOptions object and defines the center and radius
                         CircleOptions circleOptions3 = new CircleOptions()
                                 .center(new LatLng(lockey.getLatitude(), lockey.getLongitude()))
-                                .radius(500)
-                                .strokeColor(Color.argb(180, 84, 160, 168))
-                                .fillColor(Color.argb(180, 84, 160, 168)); // In meters
+                                .radius(lockey.getAccuracy())
+                                .strokeColor(Color.argb(80, 166, 241, 210))
+                                .fillColor(Color.argb(80, 166, 241, 210)); // In meters
 
                         if (locPhone != null) {
                             double angle = angleFromCoordinate(locPhone.getLatitude(), locPhone.getLongitude(), lockey.getLatitude(), lockey.getLongitude());
                             mMap.addMarker(new MarkerOptions()
                                     .icon(BitmapDescriptorFactory.fromResource(R.drawable.arrow))
-                                    .position(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()))
+                                    .position(new LatLng(locPhone.getLatitude(), locPhone.getLongitude()))
                                     .flat(true)
                                     .rotation((float) angle - 90));
                         }
@@ -259,11 +296,15 @@ public class MapActivity extends Activity implements
 
     private void setupMap() {
         mMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
+        mMap.setMyLocationEnabled(true);
+        mMap.getUiSettings().setMyLocationButtonEnabled(true);
+        mMap.getUiSettings().setCompassEnabled(true);
+        mMap.getUiSettings().setMapToolbarEnabled(false);
 
-        float zoom = getIntent().getFloatExtra("zoom", 15.0f);
+//        float zoom = getIntent().getFloatExtra("zoom", 15.0f);
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(UQ, zoom));
-        mMap.addMarker(new MarkerOptions().position(UQ));
+//        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(UQ, zoom));
+//        mMap.addMarker(new MarkerOptions().position(UQ));
     }
 
     private void setOutlines(int star, int info) {
@@ -361,15 +402,26 @@ public class MapActivity extends Activity implements
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()), 12));
             }
         } else {
+
+            if (lockey != null) {
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lockey.getLatitude(), lockey.getLongitude()), 12));
+            } else if (myLocation != null) {
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()), 12));
+            }
+
             reveal = ViewAnimationUtils.createCircularReveal(
-                    infoContainer, cx, cy, radius, 0);
-            reveal.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    infoContainer.setVisibility(View.INVISIBLE);
-                }
-            });
-            reveal.setInterpolator(new DecelerateInterpolator(2.0f));
+                    infoContainer, cx, cy, 0, radius);
+            reveal.setInterpolator(new AccelerateInterpolator(2.0f));
+
+//            reveal = ViewAnimationUtils.createCircularReveal(
+//                    infoContainer, cx, cy, radius, 0);
+//            reveal.addListener(new AnimatorListenerAdapter() {
+//                @Override
+//                public void onAnimationEnd(Animator animation) {
+//                    infoContainer.setVisibility(View.INVISIBLE);
+//                }
+//            });
+//            reveal.setInterpolator(new DecelerateInterpolator(2.0f));
         }
         reveal.setDuration(600);
         reveal.start();
@@ -392,21 +444,31 @@ public class MapActivity extends Activity implements
             reveal = ViewAnimationUtils.createCircularReveal(
                     infoContainer, cx, cy, 0, radius);
             reveal.setInterpolator(new AccelerateInterpolator(2.0f));
+
             if (locPhone != null) {
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(locPhone.getLatitude(), locPhone.getLongitude()), 12));
             } else if (myLocation != null) {
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()), 12));
             }
         } else {
+
             reveal = ViewAnimationUtils.createCircularReveal(
-                    infoContainer, cx, cy, radius, 0);
-            reveal.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    infoContainer.setVisibility(View.INVISIBLE);
-                }
-            });
-            reveal.setInterpolator(new DecelerateInterpolator(2.0f));
+                    infoContainer, cx, cy, 0, radius);
+            reveal.setInterpolator(new AccelerateInterpolator(2.0f));
+            if (locPhone != null) {
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(locPhone.getLatitude(), locPhone.getLongitude()), 12));
+            } else if (myLocation != null) {
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()), 12));
+            }
+//            reveal = ViewAnimationUtils.createCircularReveal(
+//                    infoContainer, cx, cy, radius, 0);
+//            reveal.addListener(new AnimatorListenerAdapter() {
+//                @Override
+//                public void onAnimationEnd(Animator animation) {
+//                    infoContainer.setVisibility(View.INVISIBLE);
+//                }
+//            });
+//            reveal.setInterpolator(new DecelerateInterpolator(2.0f));
         }
         reveal.setDuration(600);
         reveal.start();

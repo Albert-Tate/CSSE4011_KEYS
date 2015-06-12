@@ -99,67 +99,69 @@ public class TCPClient {
         try {
             if (socketChannel == null || !socketChannel.isOpen())
                 socketChannel = SocketChannel.open();
-            if (!socketChannel.isConnected()) {
-                // we open this channel in non blocking mode
-                socketChannel.configureBlocking(false);
-                socketChannel.connect(new InetSocketAddress(TCP_SERVER_IP, TCP_SERVER_PORT));
-                int timeout = 0;
-                while (!socketChannel.finishConnect()) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+            if (!socketChannel.isConnectionPending()) {
+                if (!socketChannel.isConnected()) {
+                    // we open this channel in non blocking mode
+                    socketChannel.configureBlocking(false);
+                    socketChannel.connect(new InetSocketAddress(TCP_SERVER_IP, TCP_SERVER_PORT));
+                    int timeout = 0;
+                    while (!socketChannel.finishConnect()) {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        timeout++;
+                        if (timeout > 150) return null;
                     }
-                    timeout++;
-                    if (timeout > 150) return null;
+                }
+                ByteBuffer inBuff = ByteBuffer.allocate(1024);
+                ByteBuffer outBuf = ByteBuffer.allocate(1024);
+                outBuf.clear();
+                outBuf.put(sendString.getBytes());
+
+                outBuf.flip();
+                try {
+                    while (outBuf.hasRemaining()) {
+                        socketChannel.write(outBuf);
+                    }
+                    String message = "";
+                    int count = 0, timeout = 0;
+                    do {
+                        if ((count = socketChannel.read(inBuff)) > 0) {
+                            // flip the buffer to start reading
+                            inBuff.flip();
+                            message += Charset.defaultCharset().decode(inBuff);
+                            break;
+                        }
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        timeout++;
+                    } while (count == 0 && timeout < 150);
+
+                    socketChannel.close();
+                    if (!message.contentEquals("")) {
+                        curLoc = new LocationParser(message, getTime).getloc();
+                        curLoc.setProvider(sendString);
+                    }
+                    return curLoc;
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
-            ByteBuffer inBuff = ByteBuffer.allocate(1024);
-            ByteBuffer outBuf = ByteBuffer.allocate(1024);
-            outBuf.clear();
-            outBuf.put(sendString.getBytes());
+        }catch(IOException e){
+            e.printStackTrace();
+        }
 
-            outBuf.flip();
             try {
-                while(outBuf.hasRemaining()) {
-                    socketChannel.write(outBuf);
-                }
-                String message = "";
-                int count = 0, timeout = 0;
-                do {
-                    if ((count = socketChannel.read(inBuff)) > 0) {
-                        // flip the buffer to start reading
-                        inBuff.flip();
-                        message += Charset.defaultCharset().decode(inBuff);
-                        break;
-                    }
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    timeout++;
-                } while (count == 0 && timeout < 150);
-
                 socketChannel.close();
-                if (!message.contentEquals(""))
-                {
-                    curLoc = new LocationParser(message, getTime).getloc();
-                    curLoc.setProvider(sendString);
-                }
-                return curLoc;
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
-        try {
-            socketChannel.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         return curLoc;
     }
 
